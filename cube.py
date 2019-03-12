@@ -63,6 +63,7 @@ class Cube:
         self._opposites = {"R":"O", "W":"Y", "G":"B", "Y":"W", "O":"R", "B":"G"}
         self._translation = {"R":"U", "W":"L", "G":"F", "Y":"R", "O":"D", "B":"B"}
         self._inverts = {"U": "U'", "D": "D'", "L": "L'", "R": "R'", "F": "F'", "B": "B'", "U'": "U", "D'": "D", "L'": "L", "R'": "R", "F'": "F", "B'": "B"}
+        self._not_effected = {"R":"L", "L":"R", "U":"D", "D":"U", "F":"B", "B":"F"}
         self._cube = self._createCube()
         self._readable_solution = []
         self._r = redis.Redis(host='localhost', port=6379, db=0)
@@ -803,7 +804,26 @@ class Cube:
 
     def _cleanUpSolution(self, solution):
         new_solution = []
-        for move in solution:
+        null = []
+
+        for i in range(len(solution)):
+            if i in null:
+                continue
+            elif i == len(solution)-1:
+                new_solution.append(solution[i])
+
+            for j in range(i+1, len(solution)):
+                if solution[j][0] == self._not_effected[solution[i][0]]:
+                    continue
+                elif solution[j] == solution[i]:
+                    new_solution.append(solution[i][0]+"2")
+                    null.append(j)
+                    break
+                else:
+                    new_solution.append(solution[i])
+                    break
+
+        """for move in solution:
             #i = random.randint(0, 11)
             #m = moves[i]
 
@@ -819,7 +839,7 @@ class Cube:
                 elif new_solution[len(new_solution)-1] == move:
                     new_solution[len(new_solution)-1] = new_solution[len(new_solution)-1][:1]+"2"
                 else:
-                    new_solution.append(move)
+                    new_solution.append(move)"""
         #print(solution)
         #print(new_solution)
         return new_solution
@@ -922,6 +942,7 @@ def main():
     
     c = CreateScramble()
     #print(c)
+    
     print("")
     print("SOLUTION:")
     start = time.time()
@@ -937,7 +958,7 @@ def main():
     fin = time.time()
     print("")
     print("Total time for solve: " + str(fin-start) + " seconds")
-
+    
     #print(c)
     #    total += fin-start
     #    print("")
@@ -1232,19 +1253,48 @@ def CreateScramble():
     s = []
     moves = ["U", "D", "L", "R", "F", "B", "U'", "D'", "L'", "R'", "F'", "B'"]
     counter = 0
-    while counter < 20:
+    #inc = lambda n : (n+3) % 12
+    while counter < 30:
         i = random.randint(0, 11)
-        m = moves[i]
-
+        #m = moves[i]
+        #print(s)
         if len(s) == 0:
-            s.append(m)
+            s.append(moves[i])
+            counter += 1
         else:
-            if s[len(s)-1] == c._inverts[m] or (len(s) > 2 and s[len(s)-1] == m and s[len(s)-2] == m):
-                continue
+            j = len(s)-1
+            doub = 0
+            #mix = 0
+	    while j >= 0:
+                #print(moves[i], c._inverts[s[j]], s[j])
+                if s[j] == moves[i]:
+                    doub += 1
+                    j -= 1
+                    if doub == 2:
+                        break
+                else:
+                #print(doub)
 
-            else:
-                s.append(m)
-        counter += 1
+                #if (s[j] == i and s[j-1] == i) or (s[j] == c._inverts[moves[i]]) or ():
+                #    break
+                #if doub > 1 or moves[i] == c._inverts[s[j]]:
+                    if moves[i] == c._inverts[s[j]]:
+                        break
+                #elif doub == 1 or s[j] == c._not_effected[s[j][0]]:
+                    elif s[j][0] == c._not_effected[moves[i][0]]:
+                        j -= 1
+                    else:
+                    #print(s)
+                    #print("Adding '" + moves[i] + "'")
+                        s.append(moves[i])
+                        counter += 1
+                        break
+            #if s[len(s)-1] == c._inverts[m] or (len(s) > 2 and s[len(s)-1] == m and s[len(s)-2] == m):
+            #    continue
+
+            #else:
+            #    s.append(m)
+        #counter += 1
         #flip = random.random()
         #if flip > 0.5:
         #    m += "'"
@@ -1272,11 +1322,13 @@ def CreateScramble():
     #s = ["D", "L", "R'", "B", "B", "U'", "F'", "L'", "U'", "B'", "U'", "B", "L'", "D", "U'", "D", "R", "B", "L", "D"]
     #s = ["B'", "F'", "L'", "U", "B", "U", "D", "R'", "D", "U", "L", "D'", "R", "L", "D", "U'", "L'", "U'", "L'", "B"]
 
+    s = c._cleanUpSolution(s)
+
     for x in s:
         c.RotateWithNotation(x)
     c._readable_solution = []
 
-    s = c._cleanUpSolution(s)
+    #s = c._cleanUpSolution(s)
     nice_s = "" + s[0]
     for i in range(1, len(s)):
         nice_s += " " + s[i]
