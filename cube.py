@@ -24,6 +24,9 @@ class Graph():
     def getBuddy(self, index):
         return self._elements[index][2]
 
+    def getNeighbours(self, index):
+        return self._elements[index][1]
+
     def getIndex(self):
         return self._index
 
@@ -62,7 +65,7 @@ class Cube:
         self._middle = buildGraph("middle_config.txt")
         self._opposites = {"R":"O", "W":"Y", "G":"B", "Y":"W", "O":"R", "B":"G"}
         self._translation = {"R":"U", "W":"L", "G":"F", "Y":"R", "O":"D", "B":"B"}
-        self._inverts = {"U": "U'", "D": "D'", "L": "L'", "R": "R'", "F": "F'", "B": "B'", "U'": "U", "D'": "D", "L'": "L", "R'": "R", "F'": "F", "B'": "B"}
+        self._inverts = {"U": "U'", "D": "D'", "L": "L'", "R": "R'", "F": "F'", "B": "B'", "U'": "U", "D'": "D", "L'": "L", "R'": "R", "F'": "F", "B'": "B", "M":"M'", "M'":"M"}
         self._not_effected = {"R":"L", "L":"R", "U":"D", "D":"U", "F":"B", "B":"F"}
         self._cube = self._createCube()
         self._readable_solution = []
@@ -199,6 +202,161 @@ class Cube:
         return str_desc
 
     def SolveCross(self):
+        self._solveCross()
+
+    def _solveCross(self):
+        """positions = self._findCrossSquares()
+        cross_positions = positions[0]
+        coloured_positions = positions[1]
+        sq_in_bottom = False
+        for i in range(len(cross_positions)):
+            if cross_positions[i][1] >= 37 and cross_positions[i][1] <= 43:
+                sq_in_bottom = True
+                break
+        if not sq_in_bottom:
+            self._closestInitialSquare(cross_positions)"""
+        positions = ['0', '1', '6', '5']
+        close = self._closestInitialSquare(positions)
+        p = self._pathNotation(close[0], close[1])
+        print(positions)
+        print(p)
+
+    def _findCrossSquares(self):
+        cross_colour = "O"
+        cross_positions = []
+        buddy_positions = []
+        for i in range(len(self._graph._elements)):
+            sq_index = self._graph.getElements(str(i))[1]
+            if self._cube[sq_index].colour == cross_colour:
+                bud_g = self._graph.getBuddy(str(i))
+                buddy_positions.append((bud_g, self._graph.getElements(bud_g)[1]))
+                cross_positions.append((str(i), sq_index))
+        return (cross_positions, buddy_positions)
+
+    def _closestInitialSquare(self, positions):
+        bottom_layer = ['16', '17', '18', '19']
+        distances = []
+        for sq in positions:
+            distances.append(self._bfs(sq, bottom_layer))
+        closest = None
+        index = 0
+        for i in range(len(distances)):
+            if closest == None or len(distances[i]) < closest:
+                closest = len(distances[i])
+                index = i
+        return (positions[i], distances[i])
+        #print(positions, distances)
+
+    def _bfs(self, initial, target):
+        found = False
+        target_found = None
+        q = Queue()
+        path = {}
+        visited = [initial]
+        current = initial
+        path[initial] = None
+        while not found:
+            for i in target:
+                if i in visited:
+                    found = True
+                    target_found = i
+                    break
+            if found:
+                break
+
+            for n in self._graph.getNeighbours(current):
+                if n not in visited:
+                    q.enqueue(n)
+                    visited.append(n)
+                    path[n] = current
+            current = q.dequeue()
+        return self._buildPath(path, target_found)
+
+    def _buildPath(self, path, current):
+        p = []
+        while True:
+            if path[current] != None:
+                p = [current] + p
+                current = path[current]
+            else:
+                break
+        return p
+
+    def _pathNotation(self, index, path):
+        notation = {'0':['U', 'B'], '1':['U', 'R'], '2':['U', 'F'], '3':['U', 'L'], '4':['L', 'U'], '5':['U', 'F'], '6':['L', 'D'], '7':['L', 'B'], '8':['F', 'U'], '9':['F', 'R'], '10':['F', 'F'], '11':['F', 'L'], '12':['R', 'U'], '13':['R', 'B'], '14':['R', 'D'], '15':['R', 'F'], '16':['D', 'F'], '17':['D', 'R'], '18':['D', 'B'], '19':['D', 'L'], '20':['B', 'D'], '21':['B', 'R'], '22':['B', 'U'], '23':['B', 'L']}
+        #print(self._graph.getNeighbours('0'))
+        #print(self._graph)
+        #return
+        p = []
+        current = index
+        for i in path:
+            neigh = self._graph.getNeighbours(current)
+            #print(neigh)
+            for n in range(len(neigh)):
+                if neigh[n] == i:
+                    t = notation[current][n/2]
+                    print(t)
+                    if n%2 == 1:
+                        t += "'"
+                    p.append(t)
+                    break
+        return p
+        
+    """def _djikstra(self, initial, target):
+        found = False
+        sptSet = []
+        distance = [None]*len(self._graph._elements)
+        distance[int(initial)] = 0
+        #print(distance)
+        #index = self._minDistance(sptSet, distance)
+        #print(index)
+        #print(self._graph.getNeighbours(str(least)))
+        while not found:
+            for i in target:
+                if i in sptSet:
+                    found = True
+                    break
+            if found:
+                break
+
+            least = self._minDistance(sptSet, distance)
+            sptSet.append(str(least))
+            neigh = self._graph.getNeighbours(str(least))
+            for n in neigh:
+                if n not in sptSet and (distance[int(n)] == None or (distance[least]+1 < distance[int(n)])):
+                    distance[int(n)] = distance[least] + 1
+            print(sptSet)
+            print(distance)
+            #if '37' in sptSet:
+            #    return
+
+        print(sptSet)
+
+    def _minDistance(self, sptSet, distance):
+        least = 100
+        index = 0
+
+        for i in range(len(self._graph._elements)):
+            if str(i) not in sptSet and distance[i] != None and distance[i] <= least:
+                least = distance[i]
+                index = i
+        return index
+        while True:
+            if nex >= len(self._graph._elements):
+                break
+            elif str(least) in sptSet or distance[least] == None:
+                least += 1
+                nex = least + 1
+            else:
+                if str(nex) not in sptSet:
+                    if distance[nex] == None or distance[least] <= distance[nex]:
+                        nex += 1
+                    else:
+                        least = nex
+                        nex = least + 1
+        return least"""
+
+    """def SolveCross(self):
         correct_states = []
         in_position = []
         targets = self._searchForCross(in_position)
@@ -464,14 +622,15 @@ class Cube:
                 other += 1
             sorted_distances.append(distances[low][0])
             del distances[low]
-        return sorted_distances
+        return sorted_distances"""
 
     #Start of F2L
     def SolveF2L(self):
-        for i in range(4):
-            print("")
-            print("F2L PAIR " + str(i+1) + ":")
-            self._searchForF2L()
+        self._optimisedF2L()
+        #for i in range(4):
+        #    print("")
+        #    print("F2L PAIR " + str(i+1) + ":")
+        #    self._searchForF2L()
 
     def _searchForF2L(self):
         cross_colour = "O"
@@ -619,14 +778,161 @@ class Cube:
         val = a + b + c + d + e
         #print(pair)
         alg = self._r.get(val)
+        return alg
         #print("")
-        print(alg)
-        a = alg.split(" ")
-        for r in a:
-            self.RotateWithNotation(r)
+        #print(alg)
+        #a = alg.split(" ")
+        #for r in a:
+        #    self.RotateWithNotation(r)
+
+    def OptimisedF2L(self):
+        alg_list = []
+        pairs1 = self._optimisedF2L()
+        for i1 in range(len(pairs1)):
+            p1 = []
+            alg1 = self._calculatePair(pairs1[i1])
+            rev1 = []
+            p1 = p1 + [alg1]
+            a1 = alg1.split(" ")
+            for r1 in a1:
+                if len(r1) > 1 and r1[1] == "'" or (len(r1) == 1):
+                    rev1 = [self._inverts[r1]] + rev1
+                else:
+                    rev1 = [r1] + rev1
+                self.RotateWithNotation(r1)
+            pairs2 = self._optimisedF2L()
+            for i2 in range(len(pairs2)):
+                p2 = p1
+                alg2 = self._calculatePair(pairs2[i2])
+                rev2 = []
+                p2 = p2 + [alg2]
+                a2 = alg2.split(" ")
+                for r2 in a2:
+                    if len(r2) > 1 and r2[1] == "'" or (len(r2) == 1):
+                        rev2 = [self._inverts[r2]] + rev2
+                    else:
+                        rev2 = [r2] + rev2
+                    self.RotateWithNotation(r2)
+                pairs3 = self._optimisedF2L()
+                for i3 in range(len(pairs3)):
+                    p3 = p2
+                    alg3 = self._calculatePair(pairs3[i3])
+                    rev3 = []
+                    p3 = p3 + [alg3]
+                    a3 = alg3.split(" ")
+                    for r3 in a3:
+                        if len(r3) > 1 and r3[1] == "'" or (len(r3) == 1):
+                            rev3 = [self._inverts[r3]] + rev3
+                        else:
+                            rev3 = [r3] + rev3
+                        self.RotateWithNotation(r3)
+                    #alg_list = alg_list + [p3]
+                    pairs4 = self._optimisedF2L()
+                    for i4 in range(len(pairs4)):
+                        p4 = p3
+                        alg4 = self._calculatePair(pairs4[i4])
+                        rev4 = []
+                        p4 = p4 + [alg4]
+                        a4 = alg4.split(" ")
+                        for r4 in a4:
+                            if len(r4) > 1 and r4[1] == "'" or (len(r4) == 1):
+                                rev4 = [self._inverts[r4]] + rev4
+                            else:
+                                rev4 = [r4] + rev4
+                            self.RotateWithNotation(r4)
+                        alg_list = alg_list + [p4]
+                        for r4 in rev4:
+                            self.RotateWithNotation(r4)
+                    for r3 in rev3:
+                        self.RotateWithNotation(r3)
+                for r2 in rev2:
+                    self.RotateWithNotation(r2)
+            for r1 in rev1:
+                self.RotateWithNotation(r1)
+
+        least = 0
+        least_num = 0
+        for i in range(len(alg_list)):
+            turns = 0
+            for j in range(len(alg_list[i])):
+                turns += len(alg_list[i][j].split(" "))
+            if turns < least_num or least_num == 0:
+                least = i
+                least_num = turns
+        return alg_list[least]
+
+    def _optimisedF2L(self):
+        cross_colour = "O"
+        slot_deciders = [(14, 23), (23, 32), (32, 46), (46, 14)]
+        slots = [(36, 13, 24, 12, 25), (38, 22, 33, 21, 34), (40, 31, 47, 30, 48), (42, 45, 15, 52, 16)]
+        corner_positions = {0:[9, 51], 9:[51, 0], 51:[0, 9], 2:[49, 29], 49:[29, 2], 29:[2, 49], \
+                            4:[27, 20], 27:[20, 4], 20:[4, 27], 6:[18, 11], 18:[11, 6], 11:[6, 18], \
+                            13:[24, 36], 24:[36, 13], 36:[13, 24], 45:[15, 42], 15:[42, 45], 42:[45, 15], \
+                            31:[47, 40], 47:[40, 31], 40:[31, 47], 22:[33, 38], 33:[38, 22], 38:[22, 33]}
+
+        side_positions = {1:50, 3:28, 5:19, 7:10, 10:7, 12:25, 16:52, 19:5, 21:34, \
+                          25:12, 28:3, 30:48, 34:21, 50:1, 52:16, 48:30}
+        
+        corner = [0, 0, 0]
+        side= [0, 0]
+        pair = []
+        all_pairs = []
+
+        for k in corner_positions.keys():
+            if self._cube[k].colour == cross_colour:
+                corner[0] = k
+                corner[1] = (self._cube[corner_positions[k][0]].colour, corner_positions[k][0])
+                corner[2] = (self._cube[corner_positions[k][1]].colour, corner_positions[k][1])
+
+                for sk in side_positions.keys():
+                    s2_position = side_positions[sk]
+                    s2_colour = self._cube[s2_position].colour
+                    
+                    if self._cube[sk].colour == corner[1][0] and s2_colour == corner[2][0]:
+                        s1_position = sk
+                        s1_colour = self._cube[sk].colour
+                        side[0] = (s1_colour, s1_position)
+                        side[1] = (s2_colour, s2_position)
+
+                        break
+
+                pair = [corner[0], corner[1], corner[2], side[0], side[1], 0, 0, 0, 0, 0]
+
+                s = 0
+                c1 = None
+                c2 = None
+                s1 = None
+                s2 = None
+                while s < len(slot_deciders):
+                    if pair[1][0] == self._cube[slot_deciders[s][0]].colour and pair[2][0] == self._cube[slot_deciders[s][1]].colour:
+                        c1 = slots[s][1]
+                        c2 = slots[s][2]
+                        s1 = slots[s][3]
+                        s2 = slots[s][4]
+                        break
+                    elif pair[1][0] == self._cube[slot_deciders[s][1]].colour and pair[2][0] == self._cube[slot_deciders[s][0]].colour:
+                        c1 = slots[s][2]
+                        c2 = slots[s][1]
+                        s1 = slots[s][4]
+                        s2 = slots[s][3]
+                        break
+                    s += 1
+
+                pair[5] = slots[s][0]
+                pair[6] = c1
+                pair[7] = c2
+                pair[8] = s1
+                pair[9] = s2
+
+                total = abs(pair[0] - pair[5]) + abs(pair[1][1] - pair[6]) + abs(pair[2][1] - pair[7]) + abs(pair[3][1] - pair[8]) + abs(pair[4][1] - pair[9])
+                
+                if total != 0:
+                    all_pairs.append(pair)
+
+        return all_pairs
 
     def SolveOLL(self):
-        self._solveOLL()
+        return self._solveOLL()
 
     def _solveOLL(self):
         cross_colour = "O"
@@ -665,25 +971,33 @@ class Cube:
                 self.RotateWithNotation("U")
             #print(top_bits)
             #print(side_bits)
-        #print(turns)
+        #print("")
+        #print("OLL:")
+        act = []
         if len(turns) > 0:
-            print("")
-            print("ALLIGNMENT:")
+            #print("")
+            #print("ALLIGNMENT:")
             if len(turns) == 3:
-                print(turns[0] + "'")
+                t = turns[0] + "'"
+                #print(turns[0] + "'")
             elif len(turns) == 2:
-                print(turns[0] + "2")
+                t = turns[0] + "2"
+                #print(turns[0] + "2")
             else:
-                print(turns[0])
+                t = turns[0]
+                #print(turns[0])
+            act.append(t)
 
-        print("")
-        print("OLL:")
-        print(alg)
+        #print("")
+        #print("OLL:")
+        #print(alg)
         a = alg.split(" ")
         for i in a:
         #    print(i)
             self.RotateWithNotation(i)
+            act.append(i)
             #print(alg_value)
+        return act
 
     def _bToI(self, bits):
         total = 0
@@ -692,7 +1006,7 @@ class Cube:
         return total
 
     def SolvePLL(self):
-        self._solvePLL()
+        return self._solvePLL()
 
     def _solvePLL(self):
         pll_skip = False
@@ -736,23 +1050,39 @@ class Cube:
             #    return
         
         if not pll_skip:
+            #print("")
+            #print("PLL:")
+            act = []
             if len(turns) > 0:
-                print("")
-                print("ALLIGNMENT:")
+                #print("")
+                #print("ALLIGNMENT:")
                 if len(turns) == 3:
-                    print(turns[0] + "'")
+                    t = turns[0]+"'"
+                    #print(turns[0] + "'")
                 elif len(turns) == 2:
-                    print(turns[0] + "2")
+                    t = turns[0]+"2"
+                    #print(turns[0] + "2")
                 else:
-                    print(turns[0])
+                    t = turns[0]
+                    #print(turns[0])
+                act.append(t)
 
-            print("")
-            print("PLL:")
-            print(alg)
+            #print("")
+            #print("PLL:")
             a = alg.split(" ")
+            #print(a)
+            #print(a)
             for i in a:
                 self.RotateWithNotation(i)
-            self._alignAfterPLL()
+                #print(i)
+                act.append(i)
+            #print(act)
+            act.append(self._alignAfterPLL())
+            return act
+            #nice_act = "" + act[0]
+            #for i in range(1, len(act)):
+            #    nice_act += " " + act[i]
+            #print(nice_act)
 
     def _alignAfterPLL(self):
         turns = []
@@ -760,15 +1090,20 @@ class Cube:
             self.RotateWithNotation("U")
             turns.append("U")
 
+        t = ""
         if len(turns) > 0:
-            print("")
-            print("ALLIGNMENT:")
+            #print("")
+            #print("ALLIGNMENT:")
             if len(turns) == 3:
-                print(turns[0] + "'")
+                t = turns[0]+"'"
+                #print(turns[0] + "'")
             elif len(turns) == 2:
-                print(turns[0] + "2")
+                t = turns[0]+"2"
+                #print(turns[0] + "2")
             else:
-                print(turns[0])
+                t = turns[0]
+                #print(turns[0])
+        return t
 
     def _returnCornerBuddies(self, state, position):
         buddies = []
@@ -928,7 +1263,45 @@ def increaseIndexByOne(index, direction):
     else:
         return t
 
+def listToStr(l):
+    s = "" + l[0]
+    for i in range(1, len(l)):
+        s += " " + l[i]
+    return s
+
 def main():
+
+    c = Cube()
+    scramble = CreateScramble()
+    ns = listToStr(scramble)
+    print("SCRAMBLE:")
+    print(ns)
+
+    for r in scramble:
+        c.RotateWithNotation(r)
+
+    print("")
+    print("SOLVE:")
+    cross = c.SolveCross()
+    """nc = listToStr(cross)
+
+    opt_f2l = c.OptimisedF2L()
+    for alg in opt_f2l:
+        a = alg.split(" ")
+        for r in a:
+            c.RotateWithNotation(r)
+
+    oll = c.SolveOLL()
+    no = listToStr(oll)
+    
+    pll = c.SolvePLL()
+    np = listToStr(pll)
+
+    print(nc)
+    for alg in opt_f2l:
+        print(alg)
+    print(no)
+    print(np)"""
 
     #CheckAlgCorrectness()
     #CheckOLLAlgs()
@@ -940,24 +1313,32 @@ def main():
     #total = 0
     #for _ in range(1000):
     
-    c = CreateScramble()
+    #c = CreateScramble()
     #print(c)
     
-    print("")
-    print("SOLUTION:")
-    start = time.time()
-    solve = c.SolveCross()
-    nice_solve = "" + solve[0]
-    for i in range(1, len(solve)):
-        nice_solve += " " + solve[i]
-    print("CROSS:")
-    print(nice_solve)
-    c.SolveF2L()
-    c.SolveOLL()
-    c.SolvePLL()
-    fin = time.time()
-    print("")
-    print("Total time for solve: " + str(fin-start) + " seconds")
+    #print("")
+    #print("SOLUTION:")
+    #start = time.time()
+    #solve = c.SolveCross()
+    #nice_solve = "" + solve[0]
+    #for i in range(1, len(solve)):
+    #    nice_solve += " " + solve[i]
+    #print("CROSS:")
+    #print(nice_solve)
+    #opt_f2l = c.OptimisedF2L()
+    #print("")
+    #print("OPTIMISED F2L:")
+    #for alg in opt_f2l:
+    #    print(alg)
+    #    a = alg.split(" ")
+    #    for r in a :
+    #        c.RotateWithNotation(r)
+    #c.SolveF2L()
+    #c.SolveOLL()
+    #c.SolvePLL()
+    #fin = time.time()
+    #print("")
+    #print("Total time for solve: " + str(fin-start) + " seconds")
     
     #print(c)
     #    total += fin-start
@@ -1289,32 +1670,6 @@ def CreateScramble():
                         s.append(moves[i])
                         counter += 1
                         break
-            #if s[len(s)-1] == c._inverts[m] or (len(s) > 2 and s[len(s)-1] == m and s[len(s)-2] == m):
-            #    continue
-
-            #else:
-            #    s.append(m)
-        #counter += 1
-        #flip = random.random()
-        #if flip > 0.5:
-        #    m += "'"
-        #print("Previous: %s\tCurrent: %s\tInvert: %s" % (prev, m, c._inverts[m]))
-        #print(not prev == c._inverts[m])
-        #if m == prev:
-        #    if count < 2:
-        #        count += 1
-        #else:
-        #    if prev != "":
-        #        for _ in range(count):
-        #            s.append(prev)
-        #    count = 1
-            #print("Previous: %s\tCurrent: %s\tInvert: %s" % (prev, m, c._inverts[m]))
-            #print(not prev == c._inverts[m])
-        #    if not prev == c._inverts[m]:
-        #        prev = m
-        #    
-        #if not (len(s) > 0 and s[len(s)-1] == c._inverts[m]) or (len(s) > 1 and s[len(s)-1] != m and s[len(s)-2] != m):
-        #    s.append(m)
 
     #print("Scramble:")
     #print(s)
@@ -1324,18 +1679,19 @@ def CreateScramble():
 
     s = c._cleanUpSolution(s)
 
-    for x in s:
-        c.RotateWithNotation(x)
+    #for x in s:
+    #    c.RotateWithNotation(x)
     c._readable_solution = []
 
     #s = c._cleanUpSolution(s)
-    nice_s = "" + s[0]
-    for i in range(1, len(s)):
-        nice_s += " " + s[i]
-    print("Scramble:")
-    print(nice_s)
+    #nice_s = "" + s[0]
+    #for i in range(1, len(s)):
+    #    nice_s += " " + s[i]
+    #print("Scramble:")
+    #print(nice_s)
 
-    return c
+    #return c
+    return s
 
 def TestLayerRotation(d, l):
     c = Cube()
