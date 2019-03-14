@@ -229,7 +229,8 @@ class Cube:
         print(coloured_positions)
         anchor_index = self._findAnchor(positions)
         anchor_targets = self._getAnchorTargets(cross_positions, coloured_positions, anchor_index)
-        print(anchor_targets)
+        self._decideOnBestPath(anchor_targets, positions, anchor_index)
+        #print(anchor_targets)
         return
         #print(positions)
         #print(anchor)
@@ -383,8 +384,63 @@ class Cube:
         for i in range(3):
             current = self._graph.getNeighbours(current)[0]
             elem = self._graph.getElements(current)[1]
-            order[colour_order[i]] = (current, elem)
+            index = None
+            for j in range(len(coloured_positions)):
+                if coloured_positions[j][2] == colour_order[i]:
+                    index = j
+                    break
+            order[colour_order[i]] = ((current, elem), index)
         return order
+
+    def _decideOnBestPath(self, anchor_targets, positions, anchor_index):
+        bottom_layer = ['16', '17', '18', '19']
+        cross_positions = positions[0]
+        coloured_positions = positions[1]
+        exclude = self._findInPosition(anchor_targets, positions)
+        exclude.append(coloured_positions[anchor_index][2])
+        path_to_bottom = []
+        target_to_position = []
+        print("")
+        print(cross_positions)
+        print(coloured_positions)
+        for i in range(len(cross_positions)):
+            if coloured_positions[i][2] not in exclude:
+                path = self._bfs(cross_positions[i][0], bottom_layer)
+                path_to_bottom.append(path)
+                target = path[-1]
+                clr = coloured_positions[i][2]
+                target_to_position.append(self._bfs(anchor_targets[clr][0][0], [target]))
+                #print(clr)
+                #print(anchor_targets[clr][0][0])
+                #print(target)
+        least = None
+        index = None
+        for i in range(len(path_to_bottom)):
+            #print(len(path_to_bottom[i]))
+            #print(len(target_to_position[i]))
+            #print(len(path_to_bottom[i]) + len(target_to_position[i]))
+            #print(least)
+            #print(len(path_to_bottom[i]) + len(target_to_position[i]) < least)
+            if least == None or (len(path_to_bottom[i]) + len(target_to_position[i])) < least:
+                least = len(path_to_bottom[i]) + len(target_to_position[i])
+                index = i
+        print(path_to_bottom)
+        print(target_to_position)
+        print(path_to_bottom[index], target_to_position[index])
+
+    def _findInPosition(self, anchor_targets, positions):
+        in_position = []
+        cross_positions = positions[0]
+        coloured_positions = positions[1]
+        print("")
+        print(cross_positions)
+        print(coloured_positions)
+        print(anchor_targets)
+        for key in anchor_targets:
+            i = anchor_targets[key][1]
+            if anchor_targets[key][0] == cross_positions[i]:
+                in_position.append(coloured_positions[i][2])
+        return in_position
         
     """def _djikstra(self, initial, target):
         found = False
@@ -1777,7 +1833,7 @@ def CreateScramble():
     #return c
     return s
     #return ["R2", "L2", "F2", "B"]
-    #return ["R", "B", "R'", "B'", "L", "R'", "F2", "B'", "D'", "F", "R'", "D", "B", "D'", "B", "U", "R'", "B'", "U'", "L'", "U'", "F", "L", "D", "L", "F", "R", "B", "D"]
+    #return ["R", "U"]
 
 def TestLayerRotation(d, l):
     c = Cube()
