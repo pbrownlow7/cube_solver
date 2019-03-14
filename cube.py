@@ -209,6 +209,7 @@ class Cube:
         cross_positions = positions[0]
         coloured_positions = positions[1]
         print(cross_positions)
+        print(coloured_positions)
         sq_in_bottom = False
         for i in range(len(cross_positions)):
             if cross_positions[i][1] >= 37 and cross_positions[i][1] <= 43:
@@ -219,17 +220,17 @@ class Cube:
             close_index = close[0]
             path = close[1]
             p = self._pathNotation(cross_positions[close_index][0], close[1])
-            cross_positions[close_index] = self._rotateReturnPosition(close_index, cross_positions, p)
             print(p)
+            positions = self._rotateReturnPosition(close_index, positions, p)
+            cross_positions = positions[0]
+            coloured_positions = positions[1]
 
         print(cross_positions)
+        print(coloured_positions)
         anchor_index = self._findAnchor(positions)
-        #print(anchor_index)
-        #print(anchor_index)
-        #print(cross_positions[anchor_index])
-        #print(cross_positions)
-        #print(anchor)
         anchor_targets = self._getAnchorTargets(cross_positions, coloured_positions, anchor_index)
+        print(anchor_targets)
+        return
         #print(positions)
         #print(anchor)
         #print(cross_positions)
@@ -242,20 +243,26 @@ class Cube:
         #print(positions)
         #print(p)
 
-    def _rotateReturnPosition(self, index, cross_positions, path):
+    def _rotateReturnPosition(self, index, positions, path):
         cross_colour = "O"
-        i = cross_positions[index][0]
-        cube_i = int(self._graph.getElements(self._graph.getBuddy(i))[1])
-        colour = self._cube[cube_i].colour
+        old_cross = positions[0]
+        old_coloured = positions[1]
         for t in path:
             self.RotateWithNotation(t)
-        for i in range(len(self._graph._elements)):
+        new_positions = self._findCrossSquares()
+        for i in range(len(old_coloured)):
+            for j in range(len(new_positions[1])):
+                if new_positions[1][j][2] == old_coloured[i][2]:
+                    old_coloured[i] = new_positions[1][j]
+                    old_cross[i] = new_positions[0][j]
+        return (old_cross, old_coloured)
+        """for i in range(len(self._graph._elements)):
             sq_index = self._graph.getElements(str(i))[1]
             if self._cube[sq_index].colour == cross_colour:
                 graph_index = self._graph.getBuddy(str(i))
                 c_i = int(self._graph.getElements(graph_index)[1])
                 if self._cube[c_i].colour == colour:
-                    return (str(i), sq_index)
+                    return (str(i), sq_index)"""
         
     def _findCrossSquares(self):
         cross_colour = "O"
@@ -265,7 +272,8 @@ class Cube:
             sq_index = self._graph.getElements(str(i))[1]
             if self._cube[sq_index].colour == cross_colour:
                 bud_g = self._graph.getBuddy(str(i))
-                buddy_positions.append((bud_g, self._graph.getElements(bud_g)[1]))
+                bud_e = self._graph.getElements(bud_g)[1]
+                buddy_positions.append((bud_g, bud_e, self._cube[bud_e].colour))
                 cross_positions.append((str(i), sq_index))
         return (cross_positions, buddy_positions)
 
@@ -281,7 +289,6 @@ class Cube:
                 closest = len(distances[i])
                 index = i
         return (index, distances[index])
-        #print(positions, distances)
 
     def _bfs(self, initial, target):
         found = False
@@ -292,19 +299,20 @@ class Cube:
         current = initial
         path[initial] = None
         while not found:
-            for i in target:
-                if i in visited:
-                    found = True
-                    target_found = i
-                    break
-            if found:
-                break
 
-            for n in self._graph.getNeighbours(current):
-                if n not in visited:
-                    q.enqueue(n)
-                    visited.append(n)
-                    path[n] = current
+            neigh = self._graph.getNeighbours(current)
+            for n in range(len(neigh)):
+                if found:
+                    break
+                if neigh[n] not in visited:
+                    q.enqueue(neigh[n])
+                    visited.append(neigh[n])
+                    path[neigh[n]] = current
+                    for i in target:
+                        if i == neigh[n]:
+                            found = True
+                            target_found = neigh[n]
+                            break
             current = q.dequeue()
         return self._buildPath(path, target_found)
 
@@ -316,6 +324,7 @@ class Cube:
                 current = path[current]
             else:
                 break
+        #print(p)
         return p
 
     def _pathNotation(self, index, path):
@@ -330,11 +339,9 @@ class Cube:
         current = index
         for i in path:
             neigh = self._graph.getNeighbours(current)
-            #print(neigh)
             for n in range(len(neigh)):
                 if neigh[n] == i:
                     t = notation[current][n/2]
-                    #print(t)
                     if n%2 == 1:
                         t += "'"
                     p.append(t)
@@ -345,8 +352,6 @@ class Cube:
         bottom_layer = ['16', '17', '18', '19']
         anchor = None
         cross_positions = positions[0]
-        #print("Now")
-        #print(cross_positions)
         coloured_positions = positions[1]
         for c in range(len(cross_positions)):
             for i in range(len(bottom_layer)):
@@ -357,8 +362,6 @@ class Cube:
     def _getAnchorTargets(self, cross_positions, coloured_positions, anchor_index):
         bottom_layer = ['16', '17', '18', '19']
         anchor_position = None
-        #print("here")
-        #print(anchor_index)
         buddy = self._graph.getElements(self._graph.getBuddy(cross_positions[anchor_index][0]))[1]
         buddy_colour = self._cube[buddy].colour
         for i in bottom_layer:
@@ -367,8 +370,6 @@ class Cube:
             if self._cube[center].colour == buddy_colour:
                 anchor_position = (i, self._graph.getElements(i)[1])
                 break
-        #print(cross_positions[anchor_index])
-        #print(anchor_position)
         current = anchor_position[0]
         colour_order = []
         for _ in range(3):
@@ -377,10 +378,13 @@ class Cube:
             center = (((current_cube / 9) + 1) * 9) - 1
             current_colour = self._cube[center].colour
             colour_order.append(current_colour)
-        current = anchor_position[0]
+        current = cross_positions[anchor_index][0]
         order = {}
-        for _ in range(3):
+        for i in range(3):
             current = self._graph.getNeighbours(current)[0]
+            elem = self._graph.getElements(current)[1]
+            order[colour_order[i]] = (current, elem)
+        return order
         
     """def _djikstra(self, initial, target):
         found = False
