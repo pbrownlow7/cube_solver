@@ -1,7 +1,7 @@
 import math
 import time
 import random
-#import redis
+import redis
 
 class Graph():
 
@@ -69,9 +69,9 @@ class Cube:
         self._not_effected = {"R":"L", "L":"R", "U":"D", "D":"U", "F":"B", "B":"F"}
         self._cube = self._createCube()
         self._readable_solution = []
-        #self._r = redis.Redis(host='localhost', port=6379, db=0)
-        #self._oll_r = redis.Redis(host='localhost', port=6379, db=1)
-        #self._pll_r = redis.Redis(host='localhost', port=6379, db=2)
+        self._r = redis.Redis(host='localhost', port=6379, db=0)
+        self._oll_r = redis.Redis(host='localhost', port=6379, db=1)
+        self._pll_r = redis.Redis(host='localhost', port=6379, db=2)
 
         self._wide_rotations = {"u":('0', 0, '5', 0), "u'":('0', 1, '5', 1), "d":('16', 0, '5', 1), "d'":('16', 1, '5', 0),
                                "l":('3', 2, '0', 0), "l'":('3', 3, '0', 1), "r":('1', 2, '0', 1), "r'":('1', 3, '0', 0),
@@ -202,15 +202,16 @@ class Cube:
         return str_desc
 
     def SolveCross(self):
-        self._solveCross()
+        return self._solveCross()
 
     def _solveCross(self):
+        cross_turns = []
         cross_colour = "O"
         positions = self._findCrossSquares()
         cross_positions = positions[0]
         coloured_positions = positions[1]
-        print(cross_positions)
-        print(coloured_positions)
+        #print(cross_positions)
+        #print(coloured_positions)
         sq_in_bottom = False
         for i in range(len(cross_positions)):
             if cross_positions[i][1] >= 37 and cross_positions[i][1] <= 43:
@@ -221,7 +222,10 @@ class Cube:
             close_index = close[0]
             path = close[1]
             p = self._pathNotation(cross_positions[close_index][0], path)
-            print(p)
+            for i in p:
+                cross_turns.append(i)
+            #cross_turns.append(p)
+            #print(p)
             positions = self._rotateReturnPosition(positions, p)
             cross_positions = positions[0]
             coloured_positions = positions[1]
@@ -233,7 +237,9 @@ class Cube:
             anchor_targets = self._getAnchorTargets(cross_positions, coloured_positions, anchor_index)
             both_paths = self._decideOnBestPath(anchor_targets, positions, anchor_index)
             correct_path = self._decidePath(both_paths)
-            print(correct_path)
+            for i in correct_path:
+                cross_turns.append(i)
+            #print(correct_path)
             positions = self._rotateReturnPosition(positions, correct_path)
             cross_positions = positions[0]
             coloured_positions = positions[1]
@@ -250,10 +256,12 @@ class Cube:
         center = (((buddy_i / 9) + 1) * 9) - 1
         while self._cube[buddy_i].colour != self._cube[center].colour:
             self.RotateWithNotation("D")
-            print("D")
+            cross_turns.append("D")
+            #print("D")
             buddy = self._graph.getBuddy(bottom_layer[0])
             buddy_i = self._graph.getElements(buddy)[1]
             center = (((buddy_i / 9) + 1) * 9) - 1
+        return cross_turns
 
     def _rotateReturnPosition(self, positions, path):
         cross_colour = "O"
@@ -1439,8 +1447,12 @@ def main():
 
     print("")
     print("SOLVE:")
+
+    start = time.time()
+
     cross = c.SolveCross()
-    """nc = listToStr(cross)
+    nc = listToStr(cross)
+    #print(nc)
 
     opt_f2l = c.OptimisedF2L()
     for alg in opt_f2l:
@@ -1454,11 +1466,17 @@ def main():
     pll = c.SolvePLL()
     np = listToStr(pll)
 
+    fin = time.time()
+
+    total = fin - start
+
     print(nc)
     for alg in opt_f2l:
         print(alg)
     print(no)
-    print(np)"""
+    print(np)
+    print("")
+    print("Time taken: " + str(total))
 
     #CheckAlgCorrectness()
     #CheckOLLAlgs()
