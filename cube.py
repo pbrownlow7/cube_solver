@@ -205,6 +205,7 @@ class Cube:
         self._solveCross()
 
     def _solveCross(self):
+        cross_colour = "O"
         positions = self._findCrossSquares()
         cross_positions = positions[0]
         coloured_positions = positions[1]
@@ -219,32 +220,42 @@ class Cube:
             close = self._closestInitialSquare(cross_positions)
             close_index = close[0]
             path = close[1]
-            p = self._pathNotation(cross_positions[close_index][0], close[1])
+            p = self._pathNotation(cross_positions[close_index][0], path)
             print(p)
-            positions = self._rotateReturnPosition(close_index, positions, p)
+            positions = self._rotateReturnPosition(positions, p)
             cross_positions = positions[0]
             coloured_positions = positions[1]
 
-        print(cross_positions)
-        print(coloured_positions)
         anchor_index = self._findAnchor(positions)
-        anchor_targets = self._getAnchorTargets(cross_positions, coloured_positions, anchor_index)
-        self._decideOnBestPath(anchor_targets, positions, anchor_index)
-        #print(anchor_targets)
-        return
-        #print(positions)
-        #print(anchor)
-        #print(cross_positions)
-            #Go through p and move the cube
-        
-        #print("hi")
-        
-        #positions = ['0', '1', '6', '5']
-        #close = self._closestInitialSquare(positions)
-        #print(positions)
-        #print(p)
+        cross_solved = False
+        bottom_layer = ['16', '17', '18', '19']
+        while not cross_solved:
+            anchor_targets = self._getAnchorTargets(cross_positions, coloured_positions, anchor_index)
+            both_paths = self._decideOnBestPath(anchor_targets, positions, anchor_index)
+            correct_path = self._decidePath(both_paths)
+            print(correct_path)
+            positions = self._rotateReturnPosition(positions, correct_path)
+            cross_positions = positions[0]
+            coloured_positions = positions[1]
+            correct = 0
+            for i in bottom_layer:
+                cube_i = self._graph.getElements(i)[1]
+                if self._cube[cube_i].colour == cross_colour:
+                    correct += 1
+            if correct == 4:
+                cross_solved = True
 
-    def _rotateReturnPosition(self, index, positions, path):
+        buddy = self._graph.getBuddy(bottom_layer[0])
+        buddy_i = self._graph.getElements(buddy)[1]
+        center = (((buddy_i / 9) + 1) * 9) - 1
+        while self._cube[buddy_i].colour != self._cube[center].colour:
+            self.RotateWithNotation("D")
+            print("D")
+            buddy = self._graph.getBuddy(bottom_layer[0])
+            buddy_i = self._graph.getElements(buddy)[1]
+            center = (((buddy_i / 9) + 1) * 9) - 1
+
+    def _rotateReturnPosition(self, positions, path):
         cross_colour = "O"
         old_cross = positions[0]
         old_coloured = positions[1]
@@ -299,6 +310,8 @@ class Cube:
         visited = [initial]
         current = initial
         path[initial] = None
+        if initial == target[-1]:
+            return []
         while not found:
 
             neigh = self._graph.getNeighbours(current)
@@ -325,17 +338,13 @@ class Cube:
                 current = path[current]
             else:
                 break
-        #print(p)
         return p
 
     def _pathNotation(self, index, path):
         notation = {'0':['U', 'B'], '1':['U', 'R'], '2':['U', 'F'], '3':['U', 'L'], '4':['L', 'U'], '5':['U', 'F'], '6':['L', 'D'], '7':['L', 'B'], '8':['F', 'U'], \
                     '9':['F', 'R'], '10':['F', 'F'], '11':['F', 'L'], '12':['R', 'U'], '13':['R', 'B'], '14':['R', 'D'], '15':['R', 'F'], '16':['D', 'F'], \
                     '17':['D', 'R'], '18':['D', 'B'], '19':['D', 'L'], '20':['B', 'D'], '21':['B', 'R'], '22':['B', 'U'], '23':['B', 'L']}
-        #print( ('0'))
-        #print(self._graph)
-        #return
-        #print(path)
+
         p = []
         current = index
         for i in path:
@@ -346,6 +355,7 @@ class Cube:
                     if n%2 == 1:
                         t += "'"
                     p.append(t)
+                    current = neigh[n]
                     break
         return p
 
@@ -400,47 +410,54 @@ class Cube:
         exclude.append(coloured_positions[anchor_index][2])
         path_to_bottom = []
         target_to_position = []
-        print("")
-        print(cross_positions)
-        print(coloured_positions)
         for i in range(len(cross_positions)):
             if coloured_positions[i][2] not in exclude:
                 path = self._bfs(cross_positions[i][0], bottom_layer)
-                path_to_bottom.append(path)
+                path_to_bottom.append((path, cross_positions[i][0]))
                 target = path[-1]
                 clr = coloured_positions[i][2]
-                target_to_position.append(self._bfs(anchor_targets[clr][0][0], [target]))
-                #print(clr)
-                #print(anchor_targets[clr][0][0])
-                #print(target)
+                bottom_path = self._bfs(anchor_targets[clr][0][0], [target])
+                target_to_position.append((bottom_path, anchor_targets[clr][0][0]))
         least = None
         index = None
         for i in range(len(path_to_bottom)):
-            #print(len(path_to_bottom[i]))
-            #print(len(target_to_position[i]))
-            #print(len(path_to_bottom[i]) + len(target_to_position[i]))
-            #print(least)
-            #print(len(path_to_bottom[i]) + len(target_to_position[i]) < least)
-            if least == None or (len(path_to_bottom[i]) + len(target_to_position[i])) < least:
-                least = len(path_to_bottom[i]) + len(target_to_position[i])
+            if least == None or (len(path_to_bottom[i][0]) + len(target_to_position[i][0])) < least:
+                least = len(path_to_bottom[i][0]) + len(target_to_position[i][0])
                 index = i
-        print(path_to_bottom)
-        print(target_to_position)
-        print(path_to_bottom[index], target_to_position[index])
+        return (path_to_bottom[index][0], target_to_position[index][0], path_to_bottom[index][1], target_to_position[index][1])
 
     def _findInPosition(self, anchor_targets, positions):
         in_position = []
         cross_positions = positions[0]
         coloured_positions = positions[1]
-        print("")
-        print(cross_positions)
-        print(coloured_positions)
-        print(anchor_targets)
         for key in anchor_targets:
             i = anchor_targets[key][1]
-            if anchor_targets[key][0] == cross_positions[i]:
+            if anchor_targets[key][0][0] == cross_positions[i][0]:
                 in_position.append(coloured_positions[i][2])
         return in_position
+
+    def _decidePath(self, both_paths):
+        bottom_layer = ['16', '17', '18', '19']
+        square_path = both_paths[0]
+        starting_point = both_paths[2]
+        bottom_start = both_paths[3]
+        bottom_path = both_paths[1]
+        path_to_take = []
+        starting_neighbour = self._graph.getBuddy(starting_point)
+        if starting_point in bottom_layer or starting_neighbour in bottom_layer:
+            p = self._pathNotation(starting_point, [square_path[0]])
+            for t in p:
+                path_to_take.append(t)
+            del square_path[0]
+        if len(bottom_path) > 0:
+            p = self._pathNotation(bottom_start, bottom_path)
+            for t in p:
+                path_to_take.append(t)
+        if len(square_path) > 0:
+            p = self._pathNotation(starting_point, square_path)
+            for t in p:
+                path_to_take.append(t)
+        return path_to_take
         
     """def _djikstra(self, initial, target):
         found = False
@@ -1833,7 +1850,7 @@ def CreateScramble():
     #return c
     return s
     #return ["R2", "L2", "F2", "B"]
-    #return ["R", "U"]
+    #return ["D'", "R", "B'", "U'", "B'", "R'", "B'", "L'", "B'", "U'", "F'", "L", "U'", "L2", "R'", "F", "B'", "R2", "L'", "F", "L2", "R2", "U", "L'", "F"]
 
 def TestLayerRotation(d, l):
     c = Cube()
