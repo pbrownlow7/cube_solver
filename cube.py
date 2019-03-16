@@ -210,8 +210,6 @@ class Cube:
         positions = self._findCrossSquares()
         cross_positions = positions[0]
         coloured_positions = positions[1]
-        #print(cross_positions)
-        #print(coloured_positions)
         sq_in_bottom = False
         for i in range(len(cross_positions)):
             if cross_positions[i][1] >= 37 and cross_positions[i][1] <= 43:
@@ -227,41 +225,26 @@ class Cube:
                 built_path.append((current, [item]))
                 current = item
             p = self._pathNotation(cross_positions[close_index][0], path, [])
-            #print(p)
-            #cross_turns.append(p)
-            #print(p)
             positions = self._rotateReturnPosition(cross_positions, coloured_positions, p, [], built_path)
-            #print(self)
             cross_positions = positions[0][0]
             coloured_positions = positions[0][1]
             for i in positions[1]:
                 cross_turns.append(i)
-            #print(positions[1])
 
         anchor_index = self._findAnchor(cross_positions, coloured_positions)
         cross_solved = False
         bottom_layer = ['16', '17', '18', '19']
         while not cross_solved:
             anchor_targets = self._getAnchorTargets(cross_positions, coloured_positions, anchor_index)
-            #print("anchors:")
-            #print(anchor_targets)
             both_paths = self._decideOnBestPath(anchor_targets, cross_positions, coloured_positions, anchor_index)
-            #print(both_paths)
             in_position = self._findInPosition(anchor_targets, cross_positions, coloured_positions)
             in_position.append(coloured_positions[anchor_index][2])
-            #print(in_position)
             correct_path = self._decidePath(both_paths, in_position)
-            #print(correct_path)
-            #for i in correct_path[0]:
-            #    cross_turns.append(i)
-            #print("path:")
-            #print(correct_path)
             positions = self._rotateReturnPosition(cross_positions, coloured_positions, correct_path[0], in_position, correct_path[1])
             cross_positions = positions[0][0]
             coloured_positions = positions[0][1]
             for i in positions[1]:
                 cross_turns.append(i)
-            #print(positions[1])
             correct = 0
             for i in bottom_layer:
                 cube_i = self._graph.getElements(i)[1]
@@ -277,8 +260,6 @@ class Cube:
         while self._cube[buddy_i].colour != self._cube[center].colour:
             self.RotateWithNotation("D")
             turns.append("D")
-            #cross_turns.append("D")
-            #print("D")
             buddy = self._graph.getBuddy(bottom_layer[0])
             buddy_i = self._graph.getElements(buddy)[1]
             center = (((buddy_i / 9) + 1) * 9) - 1
@@ -316,26 +297,14 @@ class Cube:
         old_coloured = coloured_positions
         collisions = []
         taken = []
-        #print("JJJ")
-        #print(path)
-        #print(path_indices)
         for t in range(len(path)):
             if path[t][0] != "D":
                 neigh = self._graph.getNeighbours(path_indices[t][0])
-                #print("Jkdkkd")
-                #print(path_indices[t][0])
-                #print(neigh)
-                #print(path_indices[t])
                 for n in range(len(neigh)):
-                    #print(neigh[n], path_indices[t][1][0])
                     if neigh[n] == path_indices[t][1][0]:
-                        #print("here")
                         op = n
-                        #print("op")
-                        #print(op)
                         break
                 if self._returnCollision(['16', '17', '18', '19'], op, path_indices[t][0], in_position):
-                    #print("collision: " + path[t])
                     collisions.append(t)
             self.RotateWithNotation(path[t])
             taken.append(path[t])
@@ -349,13 +318,6 @@ class Cube:
                     old_coloured[i] = new_positions[1][j]
                     old_cross[i] = new_positions[0][j]
         return ((old_cross, old_coloured), taken)
-        """for i in range(len(self._graph._elements)):
-            sq_index = self._graph.getElements(str(i))[1]
-            if self._cube[sq_index].colour == cross_colour:
-                graph_index = self._graph.getBuddy(str(i))
-                c_i = int(self._graph.getElements(graph_index)[1])
-                if self._cube[c_i].colour == colour:
-                    return (str(i), sq_index)"""
         
     def _findCrossSquares(self):
         cross_colour = "O"
@@ -392,14 +354,8 @@ class Cube:
         visited = [initial]
         current = initial
         path[initial] = None
-        #if initial == target[-1]:
-        #    print(initial)
-        #    print(target[-1])
-        #    return []
 
-        #print("blah")
         if current in bottom_layer:
-            #print("here")
             neigh = self._graph.getNeighbours(current)
             for n in neigh:
                 if n not in bottom_layer:
@@ -408,7 +364,6 @@ class Cube:
                         return [n, current]
                     current = n
                     break
-            #print(path)
         
         while not found:
             neigh = self._graph.getNeighbours(current)
@@ -425,7 +380,6 @@ class Cube:
                             target_found = neigh[n]
                             break
             current = q.dequeue()
-            #print(path)
         return self._buildPath(path, target_found)
 
     def _buildPath(self, path, current):
@@ -440,11 +394,6 @@ class Cube:
 
     def _pathNotation(self, index, path, in_position):
         bottom_layer = ['16', '17', '18', '19']
-        #print("Jjkjdsna")
-        #print(anchor_targets)
-        #in_position = self._findInPosition(anchor_targets, positions)
-        #print("JGJGJGJ")
-        #print(in_position)
         notation = {'0':['U', 'B'], '1':['U', 'R'], '2':['U', 'F'], '3':['U', 'L'], '4':['L', 'U'], '5':['U', 'F'], '6':['L', 'D'], '7':['L', 'B'], '8':['F', 'U'], \
                     '9':['F', 'R'], '10':['F', 'F'], '11':['F', 'L'], '12':['R', 'U'], '13':['R', 'B'], '14':['R', 'D'], '15':['R', 'F'], '16':['D', 'F'], \
                     '17':['D', 'R'], '18':['D', 'B'], '19':['D', 'L'], '20':['B', 'D'], '21':['B', 'R'], '22':['B', 'U'], '23':['B', 'L']}
@@ -460,35 +409,19 @@ class Cube:
                     if n%2 == 1:
                         t += "'"
                     p.append(t)
-                    #self._returnCollision(bottom_layer, n, neigh[n], in_position)
-                    #if self._returnCollision(bottom_layer, n, neigh[n], in_position):
-                    #    corrections.append(self._inverts[t])
-                    #    print("collision")
-                    #    print(t)
                     current = neigh[n]
                     break
-        #for c in corrections:
-        #    p.append(c)
         return p
 
     def _returnCollision(self, bottom_layer, op, current, in_position):
         for i in range(4):
-            #print("curr")
-            #print(current)
             buddy_index = self._graph.getBuddy(current)
             if current in bottom_layer or buddy_index in bottom_layer:
                 cube_i = self._graph.getElements(current)[1]
                 buddy_i = self._graph.getElements(self._graph.getBuddy(current))[1]
-                #print(self)
                 bottom_clr = self._cube[cube_i].colour
                 buddy_clr = self._cube[buddy_i].colour
-                #print(bottom_clr, buddy_clr)
-                #print(in_position)
                 if (bottom_clr == "O" and buddy_clr in in_position) or (buddy_clr == "O" and bottom_clr in in_position):
-                    #print(cube_i)
-                    #print(self)
-                    #print("coll")
-                    #print(bottom_clr, current)
                     return True
             current = self._graph.getNeighbours(current)[op]
         return False
@@ -496,8 +429,6 @@ class Cube:
     def _findAnchor(self, cross_positions, coloured_positions):
         bottom_layer = ['16', '17', '18', '19']
         anchor = None
-        #cross_positions = positions[0]
-        #coloured_positions = positions[1]
         for c in range(len(cross_positions)):
             for i in range(len(bottom_layer)):
                 if cross_positions[c][0] == bottom_layer[i]:
@@ -538,25 +469,16 @@ class Cube:
 
     def _decideOnBestPath(self, anchor_targets, cross_positions, coloured_positions, anchor_index):
         bottom_layer = ['16', '17', '18', '19']
-        #cross_positions = positions[0]
-        #coloured_positions = positions[1]
         exclude = self._findInPosition(anchor_targets, cross_positions, coloured_positions)
         exclude.append(coloured_positions[anchor_index][2])
         path_to_bottom = []
         target_to_position = []
         for i in range(len(cross_positions)):
-            #print(cross_positions)
-            #print(coloured_positions[i][2])
-            #print(cross_positions[i])
             if coloured_positions[i][2] not in exclude:
                 path = self._bfs(cross_positions[i][0], bottom_layer)
-                #print(coloured_positions[i][2])
-                #print(path)
-                #print(path)
                 path_to_bottom.append((path, cross_positions[i][0]))
                 target = path[-1]
                 clr = coloured_positions[i][2]
-                #bottom_path = self._bfs(anchor_targets[clr][0][0], [target])
                 bottom_path = self._findBottomToTarget(anchor_targets[clr][0][0], target)
                 target_to_position.append((bottom_path, anchor_targets[clr][0][0]))
         least = None
@@ -565,9 +487,6 @@ class Cube:
             if least == None or (len(path_to_bottom[i][0]) + len(target_to_position[i][0])) < least:
                 least = len(path_to_bottom[i][0]) + len(target_to_position[i][0])
                 index = i
-        #print(path_to_bottom[index][0])
-        #print(target_to_position)
-        #print((path_to_bottom[index][0], target_to_position[index][0], path_to_bottom[index][1], target_to_position[index][1]))
         return (path_to_bottom[index][0], target_to_position[index][0], path_to_bottom[index][1], target_to_position[index][1])
 
     def _findBottomToTarget(self, start, target):
@@ -588,8 +507,6 @@ class Cube:
 
     def _findInPosition(self, anchor_targets, cross_positions, coloured_positions):
         in_position = []
-        #cross_positions = positions[0]
-        #coloured_positions = positions[1]
         for key in anchor_targets:
             i = anchor_targets[key][1]
             if anchor_targets[key][0][0] == cross_positions[i][0]:
@@ -612,8 +529,6 @@ class Cube:
             for t in p:
                 path_to_take.append(t)
             del square_path[0]
-        #print("HHH")
-        #print(square_path)
         if len(bottom_path) > 0:
             current = bottom_start
             for item in bottom_path:
@@ -627,357 +542,11 @@ class Cube:
             for item in square_path:
                 path_indices.append((current, [item]))
                 current = item
-            #collisions = []
-            #current = starting_point
-            #for i in range(len(square_path)):
-            #    nex = None
-            #    op = None
-            #    neigh = self._graph.getNeighbours(current)
-            #    for n in range(len(neigh)):
-            #        if neigh[n] == square_path[i]:
-            #            op = n
-            #            nex = neigh[n]
-            #            break
-            #    if self._returnCollision(bottom_layer, op, current, in_position):
-            #        collisions.append(i)
-            #    current = nex
-            #print("here")
-            #print(starting_point)
-            #print(square_path)
             p = self._pathNotation(starting_point, square_path, in_position)
-            #for c in collisions:
-            #    print("Collision with: " + p[c])
-            #    return
-            #    p.append(self._inverts[p[c]])
-            #print(p)
             for t in p:
                 path_to_take.append(t)
-        #print("BLAH")
-        #print(path_indices)
         return (path_to_take, path_indices)
         
-    """def _djikstra(self, initial, target):
-        found = False
-        sptSet = []
-        distance = [None]*len(self._graph._elements)
-        distance[int(initial)] = 0
-        #print(distance)
-        #index = self._minDistance(sptSet, distance)
-        #print(index)
-        #print(self._graph.getNeighbours(str(least)))
-        while not found:
-            for i in target:
-                if i in sptSet:
-                    found = True
-                    break
-            if found:
-                break
-
-            least = self._minDistance(sptSet, distance)
-            sptSet.append(str(least))
-            neigh = self._graph.getNeighbours(str(least))
-            for n in neigh:
-                if n not in sptSet and (distance[int(n)] == None or (distance[least]+1 < distance[int(n)])):
-                    distance[int(n)] = distance[least] + 1
-            print(sptSet)
-            print(distance)
-            #if '37' in sptSet:
-            #    return
-
-        print(sptSet)
-
-    def _minDistance(self, sptSet, distance):
-        least = 100
-        index = 0
-
-        for i in range(len(self._graph._elements)):
-            if str(i) not in sptSet and distance[i] != None and distance[i] <= least:
-                least = distance[i]
-                index = i
-        return index
-        while True:
-            if nex >= len(self._graph._elements):
-                break
-            elif str(least) in sptSet or distance[least] == None:
-                least += 1
-                nex = least + 1
-            else:
-                if str(nex) not in sptSet:
-                    if distance[nex] == None or distance[least] <= distance[nex]:
-                        nex += 1
-                    else:
-                        least = nex
-                        nex = least + 1
-        return least"""
-
-    """def SolveCross(self):
-        correct_states = []
-        in_position = []
-        targets = self._searchForCross(in_position)
-        targets = self._checkCross(targets, in_position)
-        positions = targets[0]
-        buddies = targets[1]
-        state_index = targets[2]
-        moves = dict()
-        for i in range(len(positions)):
-            m = self._findClosestSquare(positions[i], state_index)
-            moves[m[0]] = m[1]
-        sorted_distances = self._sortDistances(moves)
-        correct_states = self._crossMove(sorted_distances[0], moves[sorted_distances[0]], correct_states, state_index)
-        in_position.append(buddies[sorted_distances[0]])
-        #print(correct_states)
-
-        while len(correct_states) < 4:
-            targets = self._searchForCross(in_position)
-            positions = targets[0]
-            buddies = targets[1]
-            state_index = targets[2]
-            target_positions = [self._findTarget(positions[i], correct_states[0]) for i in range(len(positions))]
-            moves = dict()
-            for i in range(len(positions)):
-                m = self._findClosestSquare(positions[i], state_index)
-                moves[m[0]] = m[1]
-            sorted_distances = self._sortDistances(moves)
-            correct_states = self._crossMove(sorted_distances[0], moves[sorted_distances[0]], correct_states, state_index)
-            in_position.append(buddies[sorted_distances[0]])
-        self._checkCrossOrientation(correct_states[0])
-        #self._cleanUpSolution()
-        return self._cleanUpSolution(self._readable_solution)
-
-    def _checkCross(self, targets, in_position):
-        count = 0
-        culprits = []
-        for i in range(len(targets[0])):
-            m = self._findClosestSquare(targets[0][i], targets[2])
-            if len(m[1]) == 0:
-                culprits.append(m[0])
-                count += 1
-        if count > 1:
-            worst = self._rankCulprits(culprits)
-            if worst[1][worst[0]] > 0:
-                return targets
-            self.Rotate(worst[0], 2)
-            targets = self._searchForCross(in_position)
-            return self._checkCross(targets, in_position)
-        return targets
-
-    def _rankCulprits(self, culprits):
-        rankings = dict()
-        for c in culprits:
-            rankings[c] = 0
-
-        for c in culprits:
-            for c2 in culprits:
-                if c != c2:
-                    state = self._findTarget(c2, c)
-                    if c2 == state:
-                        rankings[c2] += 1
-        worst = None
-        for key in rankings.keys():
-            if worst == None or rankings[key] < worst:
-                worst = key
-        return (worst, rankings)
-
-    def _checkCrossOrientation(self, inserted):
-        inserted_buddy = self._graph.getBuddy(inserted)
-        new_state = inserted
-        inserted_turns = 0
-        for i in range(1, 4):
-            new_state = self._graph._elements[new_state][1][0]
-            target_state = self._graph.getBuddy(new_state)
-            center = ((self._graph.getElements(target_state)[1] / 9) * 9) + 8
-            if self._cube[self._graph._elements[inserted_buddy][0][1]].colour == self._cube[center].colour:
-                inserted_turns = i
-
-        for _ in range(inserted_turns):
-            self.Rotate(inserted, 0)
-
-    def _crossMove(self, index, path, correct_states, state_index):
-        for i in range(len(path)):
-            prev = index
-            index = self._graph._elements[prev][1][path[i]]
-            if len(correct_states) > 0:
-                if int(index) >= state_index and int(index) <= state_index+3:
-                    while self._findTarget(prev, correct_states[0]) != index:
-                        for x in range(len(correct_states)):
-                            correct_states[x] = self._graph._elements[correct_states[x]][1][0]
-                        self.Rotate(index, 0)
-                    self.Rotate(prev, path[i])
-                else:
-                    while self._collides(index, correct_states, path[i]):
-                        self.Rotate(correct_states[0], 0)
-                        for x in range(len(correct_states)):
-                            correct_states[x] = self._graph._elements[correct_states[x]][1][0]
-                    self.Rotate(prev, path[i])
-            else:
-                self.Rotate(prev, path[i])
-        correct_states.append(index)
-        return correct_states
-
-    def _searchForCross(self, in_position):
-        center_position = self._findCenter("O")
-        positions = []
-        target_positions = []
-        buddies = dict()
-        index = 0
-        found = 0
-        while found < 4:
-            i = str(index)
-            if self._cube[self._graph.getElements(i)[1]].colour == "O":
-                #print(i)
-                #print(self._graph.getElements(i))
-                #print(self._cube[int(i)].colour)
-                found += 1
-                buddy = self._cube[self._graph.getElements(self._graph.getBuddy(i))[1]].colour
-                if buddy not in in_position:
-                    positions.append(i)
-                    buddies[i] = buddy
-            index += 1
-        #print(self)
-        #print(positions)
-        #buddies = [self._cube[self._graph.getElements(self._graph.getBuddy(i))[1]].colour for i in positions]
-        #buddies = dict()
-        #for i in positions:
-        #    buddies[i] = self._cube[self._graph.getElements(self._graph.getBuddy(i))[1]].colour
-        state_index = (center_position / 9) * 4
-        return (positions, buddies, state_index)
-
-    def _findTarget(self, index, inserted):
-        inserted_buddy = self._graph.getBuddy(inserted)
-        index_buddy = self._graph.getBuddy(index)
-        new_state = inserted
-        inserted_turns = 0
-        index_turns = 0
-        for i in range(1, 5):
-            new_state = self._graph._elements[new_state][1][0]
-            target_state = self._graph.getBuddy(new_state)
-            center = ((self._graph.getElements(target_state)[1] / 9) * 9) + 8
-            if self._cube[self._graph._elements[inserted_buddy][0][1]].colour == self._cube[center].colour:
-                index_state = new_state
-                for j in range(1, 5):
-                    index_state = self._graph._elements[index_state][1][0]
-                    t_state = self._graph.getBuddy(index_state)
-                    c = ((self._graph.getElements(t_state)[1] / 9) * 9) + 8
-                    if self._cube[self._graph._elements[index_buddy][0][1]].colour == self._cube[c].colour:
-                        index_turns = j
-                        break
-                break
-        new_state = inserted
-        for _ in range(index_turns):
-            new_state = self._graph._elements[new_state][1][0]
-        return new_state
-
-    def _findClosestSquare(self, current, state_index):
-        #print(self._graph.getElements(str(current))[1])
-        #print(self._graph.getElements(str(state_index))[1])
-        open_set = Queue()
-        closed_set = []
-        meta = dict()
-
-        root = current
-        meta[root] = None
-        open_set.enqueue(root)
-
-        while not open_set.empty():
-            subtree_root = open_set.dequeue()
-            if int(subtree_root) >= state_index and int(subtree_root) <= state_index+3:
-                return self._constructPath(subtree_root, meta)
-
-            for node in self._graph._elements[str(subtree_root)][1]:
-                if node in closed_set:
-                    continue
-
-                if node not in open_set:
-                    meta[node] = subtree_root
-                    open_set.enqueue(node)
-
-            closed_set.append(subtree_root)
-
-    def _findPath(self, current, target, correct_states):
-        #print(target)
-        open_set = Queue()
-        closed_set = []
-        meta = dict()
-
-        root = current
-        meta[root] = None
-        open_set.enqueue(root)
-
-        while not open_set.empty():
-            subtree_root = open_set.dequeue()
-            #print(subtree_root)
-            if subtree_root == target:
-                return self._constructPath(subtree_root, meta)
-
-            for node in self._graph._elements[subtree_root][1]:
-                states = []
-                min_state = str((self._graph.getElements(target)[1] / 9) * 4)
-                for i in range(3):
-                    if min_state != target:
-                        states.append(min_state)
-                    min_state = self._graph._elements[str(min_state)][1][0]
-                #print(states)
-                #print(node)
-                #print(node in states)
-                #coll = self._collides(node, correct_states)
-
-                if node in closed_set:# or self._collides(node, correct_states):# or node in states:
-                    #print(node)
-                    continue
-
-                if node not in open_set:
-                    meta[node] = subtree_root
-                    open_set.enqueue(node)
-
-            closed_set.append(subtree_root)
-
-    def _collides(self, node, correct_states, op):
-        buddy = self._graph.getBuddy(node)
-        for _ in range(4):
-            if node in correct_states or buddy in correct_states:
-                return True
-            node = self._graph._elements[node][1][op]
-            buddy = self._graph.getBuddy(node)
-        return False
-        #if self._cube[self._graph._elements[correct_states[0]][0][1]].colour != "O":
-        #    #print(self._cube[self._graph._elements[correct_states[0]][0][1]].colour)
-        #    return True
-        #buddy = self._graph.getBuddy(node)
-        #if node in correct_states:
-        #    return True
-        #return False
-
-    def _constructPath(self, subtree, meta):
-        path = [subtree]
-        while meta[subtree] != None:
-            path = [meta[subtree]] + path
-            subtree = meta[subtree]
-        for i in range(1, len(path)):
-            i = i*-1
-            index = path[i]
-            for j in range(len(self._graph._elements[path[i-1]][1])):
-                if self._graph._elements[path[i-1]][1][j] == index:
-                    path[i] = j
-        del path[0]
-        return (subtree, path)
-
-    def _distance(self, index, moves):
-        return (index, len(moves))
-
-    def _sortDistances(self, moves):
-        distances = [(key, moves[key]) for key in moves.keys()]
-        sorted_distances = []
-        while len(distances) > 0:
-            low = 0
-            other = 1
-            while other < len(distances):
-                if len(distances[other][1]) < len(distances[low][1]):
-                    low = other
-                other += 1
-            sorted_distances.append(distances[low][0])
-            del distances[low]
-        return sorted_distances"""
-
     #Start of F2L
     def SolveF2L(self):
         self._optimisedF2L()
@@ -1627,24 +1196,35 @@ def main():
 
     #total = 0
     start = time.time()
-    for _ in range(10000):
-        c = Cube()
-        scramble = CreateScramble()
-        ns = listToStr(scramble)
-    #print("SCRAMBLE:")
-    #print(ns)
+    #print("Starting")
+    #for i in range(1000):
+    c = Cube()
+    scramble = CreateScramble()
+    ns = listToStr(scramble)
+    print("SCRAMBLE:")
+    print(ns)
 
-        for r in scramble:
-            c.RotateWithNotation(r)
+    for r in scramble:
+        c.RotateWithNotation(r)
 
-    #print("")
-    #print("SOLVE:")
+    print("")
+    print("SOLVE:")
 
     #start = time.time()
 
-        cross = c.SolveCross()
-        nc = listToStr(cross)
-    #print(nc)
+    cross = c.SolveCross()
+    nc = listToStr(cross)
+
+    #if i == 999:
+    #    print("Finished")
+    #    print("SCRAMBLE:")
+    #    print(ns)
+    #    print("")
+    #    print("SOLVE:")
+    print(nc)
+    print("")
+    print("")
+    #print("Finishing")
     fin = time.time()
     print(fin - start)
 
