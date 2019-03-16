@@ -202,11 +202,44 @@ class Cube:
         return str_desc
 
     def SolveCross(self):
+        """
+        Returns the steps to solving the first stage of the solve
+        """
+        
         return self._solveCross()
 
     def _solveCross(self):
+        """
+        Main funciton of the cross solve. Starts by getting the positions of each of the cross squares. Checks whether on of them is in the bottom layer. If not
+        then the closest square to the bottom layer is found and inserted. After that the anchor square is found - which is the square that the positions of all
+        other cross squares are based off. Next it finds where the other cross squares are supposed to go in relation to this anchor - called anchorTargets. It then
+        finds the shortest path to the respective anchor targets. It then changes this path into its letter representation, passing in squares that are already in the
+        correct position so they don't get moved. This is repeated until every cross square is in the bottom layer in the correct position inrespect to the other
+        cross squares. Then the bottom layer is turned until it's in the correct position.
+
+        cross_turns - the turns undertaken while solving the cross
+        positions - the positions of the cross squares in the form (x, y) where x is the index in _graph and y is the index in _cube. positions[0] is the cross colour
+                    sticker positions, positions[1] is the corresponding colour sticker positions for those squares
+        cross_positions - takes on positions[0]
+        coloured_positions - takes on positions[1]
+        sq_in_bottom - True if there's a square in the bottom layer, False otherwise
+        close - holds the index (in cross_positions) of the square that is closest to the bottom layer, and the path to this target
+        close_index - takes on close[0] (closest square's index)
+        path - takes on close[1] (path to the bottom layer)
+        p - the letter representation of path
+        anchor_index - the index (in cross_positions) of the cross square in the bottom layer to base the other cross square positions off
+        cross_solved - False until each piece is in the correct orientation in the bottom layer
+        anchor_targets - the targets in the bottom layer for each cross square not inserted yet represented as a dictionary where the key is the colour of the
+                        corresponding sticker on the cross square and the value is a truple ((index in _graph, index in _cube), index in cross_positions)
+        both_paths - returns the path from the closest cross square to the bottom layer, the path from that squares anchor_target, the starting position of the cross
+                    square, and the starting position of the anchor_target square
+        in_position - the colours of all the cross squares in position
+        correct_path - the letter representation of the path the insert the closest cross square
+        actual_turns - used to clean up cross_turns
+        """
+        
         cross_turns = []
-        cross_colour = "O"
+        cross_colour = "O" #TODO: move to global variable
         positions = self._findCrossSquares()
         cross_positions = positions[0]
         coloured_positions = positions[1]
@@ -292,7 +325,20 @@ class Cube:
         return actual_turns
 
     def _rotateReturnPosition(self, cross_positions, coloured_positions, path, in_position, path_indices):
-        cross_colour = "O"
+        """
+        Rotates the cube based on path. It checks whether one of the turns in path moves one of the correctly oriented cross squares in the bottom out of position and
+        corrects it after the current cross square is moved into position. It then finds the new positions of the cross squares and updates the values in positions. It
+        keeps the positioning of the squares in positions consistent for simplicity for other functions. Returns the updated values for cross_positions and
+        coloured_positions and the letter representation of the moves taken
+
+        old_cross - holds the values of the old cross positions
+        old_coloured - holds the values of the old coloured stickers of each cross square
+        collisions - holds the values of any collisions that happen during turning
+        taken - holds the letter representation of every turn taken, including readjustments for collisions
+        new_positions - holds the new values for cross positions and their corresponding coloured stickers
+        """
+        
+        cross_colour = "O" #TODO: make global
         old_cross = cross_positions
         old_coloured = coloured_positions
         collisions = []
@@ -320,7 +366,15 @@ class Cube:
         return ((old_cross, old_coloured), taken)
         
     def _findCrossSquares(self):
-        cross_colour = "O"
+        """
+        Runs through _graph checking if the elements in the center of the node is the same as cross_colour, taking note of their index in _graph and _cube. It also
+        takes note of the positions of the corresponding colour sticker, along with the colour of the sticker. Returns these values
+
+        cross_positions - the index of the cross square in _graph and _cube
+        buddy_positions - the index of the corresponding colour sticker in _graph and _cube, as well as the colour
+        """
+        
+        cross_colour = "O" #TODO: make global
         cross_positions = []
         buddy_positions = []
         for i in range(len(self._graph._elements)):
@@ -333,6 +387,15 @@ class Cube:
         return (cross_positions, buddy_positions)
 
     def _closestInitialSquare(self, positions):
+        """
+        Runs through _graph looking for cross squares and takes note of the distance of each of these squares to the bottom layer. Returns the index (in
+        cross_positions) of the closest square and the path to the bottom_layers
+
+        distances - the paths of each of the cross squares to the bottom_layer
+        closest - the number of moves of the closest square
+        index - the index of the closest square
+        """
+        
         bottom_layer = ['16', '17', '18', '19']
         distances = []
         for sq in positions:
