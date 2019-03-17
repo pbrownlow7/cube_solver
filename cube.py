@@ -1,7 +1,7 @@
 import math
 import time
 import random
-#import redis
+import redis
 
 class Graph():
 
@@ -69,9 +69,9 @@ class Cube:
         self._not_effected = {"R":"L", "L":"R", "U":"D", "D":"U", "F":"B", "B":"F"}
         self._cube = self._createCube()
         self._readable_solution = []
-        #self._r = redis.Redis(host='localhost', port=6379, db=0)
-        #self._oll_r = redis.Redis(host='localhost', port=6379, db=1)
-        #self._pll_r = redis.Redis(host='localhost', port=6379, db=2)
+        self._r = redis.Redis(host='localhost', port=6379, db=0)
+        self._oll_r = redis.Redis(host='localhost', port=6379, db=1)
+        self._pll_r = redis.Redis(host='localhost', port=6379, db=2)
 
         self._wide_rotations = {"u":('0', 0, '5', 0), "u'":('0', 1, '5', 1), "d":('16', 0, '5', 1), "d'":('16', 1, '5', 0),
                                "l":('3', 2, '0', 0), "l'":('3', 3, '0', 1), "r":('1', 2, '0', 1), "r'":('1', 3, '0', 0),
@@ -1257,10 +1257,11 @@ def listToStr(l):
 
 def main():
 
-    #total = 0
-    start = time.time()
+    total = 0
+    #start = time.time()
     #print("Starting")
-    #for i in range(1000):
+    #for i in range(100):
+    start = time.time()
     c = Cube()
     scramble = CreateScramble()
     ns = listToStr(scramble)
@@ -1284,14 +1285,14 @@ def main():
     #    print(ns)
     #    print("")
     #    print("SOLVE:")
-    print(nc)
-    print("")
-    print("")
+    #print(nc)
+    #print("")
+    #print("")
     #print("Finishing")
-    fin = time.time()
-    print(fin - start)
+    #fin = time.time()
+    #print(fin - start)
 
-    """opt_f2l = c.OptimisedF2L()
+    opt_f2l = c.OptimisedF2L()
     for alg in opt_f2l:
         a = alg.split(" ")
         for r in a:
@@ -1313,7 +1314,8 @@ def main():
     print(no)
     print(np)
     print("")
-    print("Time taken: " + str(total))"""
+    print("Time taken: " + str(total))
+    #print("Average time take: " + str(total/100))
 
 def DetermineCorrectness(c):
     state = "16"
