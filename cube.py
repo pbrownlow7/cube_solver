@@ -779,6 +779,7 @@ class Cube:
             alg1 = self._calculatePair(pairs1[i1])
             rev1 = []
             p1 = p1 + [alg1]
+            #print(alg1)
             a1 = alg1.split(" ")
             for r1 in a1:
                 if len(r1) > 1 and r1[1] == "'" or (len(r1) == 1):
@@ -931,12 +932,17 @@ class Cube:
         while True:
             top_bits = []
             side_bits = []
+            num_top_bits = 0
 
             for i in top_squares:
                 if self._cube[i].colour == match_colour:
+                    num_top_bits += 1
                     top_bits.append(1)
                 else:
                     top_bits.append(0)
+
+            if num_top_bits == 9:
+                return []
 
             for i in side_squares:
                 if self._cube[i].colour == match_colour:
@@ -995,17 +1001,17 @@ class Cube:
         return self._solvePLL()
 
     def _solvePLL(self):
-        pll_skip = False
+        #pll_skip = False
         if (self._cube[51].colour == self._cube[50].colour and self._cube[50].colour == self._cube[49].colour) and \
             (self._cube[29].colour == self._cube[28].colour and self._cube[28].colour == self._cube[27].colour):
-            self._alignAfterPLL()
-            pll_skip = True
+            return [self._alignAfterPLL()]
+            #pll_skip = True
         alg = None
         turns = []
         #col_to_num = {self._cube[17].colour:1, self._cube[26].colour:2, self._cube[35].colour:3, self._cube[53].colour:4}
         side_positions = [51, 50, 49, 29, 28, 27, 20, 19, 18, 11, 10, 9]
 
-        while alg == None and not pll_skip:
+        while alg == None:# and not pll_skip:
             l = [[], [], [], []]
             cols = {}
             for i in range(len(side_positions)):
@@ -1035,46 +1041,52 @@ class Cube:
             #if len(turns) == 4:
             #    return
         
-        if not pll_skip:
+        #if not pll_skip:
             #print("")
             #print("PLL:")
-            act = []
-            if len(turns) > 0:
+        act = []
+        if len(turns) > 0:
                 #print("")
                 #print("ALLIGNMENT:")
-                if len(turns) == 3:
-                    t = turns[0]+"'"
+            if len(turns) == 3:
+                t = turns[0]+"'"
                     #print(turns[0] + "'")
-                elif len(turns) == 2:
-                    t = turns[0]+"2"
+            elif len(turns) == 2:
+                t = turns[0]+"2"
                     #print(turns[0] + "2")
-                else:
-                    t = turns[0]
+            else:
+                t = turns[0]
                     #print(turns[0])
-                act.append(t)
+            act.append(t)
 
             #print("")
             #print("PLL:")
-            a = alg.split(" ")
+        a = alg.split(" ")
             #print(a)
             #print(a)
-            for i in a:
-                self.RotateWithNotation(i)
+        for i in a:
+            self.RotateWithNotation(i)
                 #print(i)
-                act.append(i)
+            act.append(i)
             #print(act)
-            act.append(self._alignAfterPLL())
-            return act
+        act.append(self._alignAfterPLL())
+        return act
             #nice_act = "" + act[0]
             #for i in range(1, len(act)):
             #    nice_act += " " + act[i]
             #print(nice_act)
+        #else:
+        #    print("here")
+        #    align = self._alignAfterPLL()
+        #    print(align)
+        #    return align
 
     def _alignAfterPLL(self):
         turns = []
         while self._cube[51].colour != self._cube[52].colour:
             self.RotateWithNotation("U")
             turns.append("U")
+        #print(turns)
 
         t = ""
         if len(turns) > 0:
@@ -1089,6 +1101,8 @@ class Cube:
             else:
                 t = turns[0]
                 #print(turns[0])
+        #print("JJ")
+        #print(t)
         return t
 
     def _returnCornerBuddies(self, state, position):
@@ -1258,6 +1272,7 @@ def listToStr(l):
 def main():
 
     total = 0
+    steps = 0
     #start = time.time()
     #print("Starting")
     #for i in range(100):
@@ -1277,32 +1292,28 @@ def main():
     #start = time.time()
 
     cross = c.SolveCross()
+    steps += len(cross)
     nc = listToStr(cross)
-
-    #if i == 999:
-    #    print("Finished")
-    #    print("SCRAMBLE:")
-    #    print(ns)
-    #    print("")
-    #    print("SOLVE:")
     #print(nc)
-    #print("")
-    #print("")
-    #print("Finishing")
-    #fin = time.time()
-    #print(fin - start)
 
     opt_f2l = c.OptimisedF2L()
     for alg in opt_f2l:
         a = alg.split(" ")
+        #print(alg)
         for r in a:
+            steps += 1
             c.RotateWithNotation(r)
 
     oll = c.SolveOLL()
-    no = listToStr(oll)
-    
+    steps += len(oll)
+    if len(oll) > 0:
+        no = listToStr(oll)
+    #print(no)
+
     pll = c.SolvePLL()
-    np = listToStr(pll)
+    steps += len(pll)
+    if len(pll) > 0:
+        np = listToStr(pll)
 
     fin = time.time()
 
@@ -1311,10 +1322,13 @@ def main():
     print(nc)
     for alg in opt_f2l:
         print(alg)
-    print(no)
-    print(np)
+    if len(oll) > 0:
+        print(no)
+    if len(pll) > 0:
+        print(np)
     print("")
     print("Time taken: " + str(total))
+    print("Total turns: " + str(steps))
     #print("Average time take: " + str(total/100))
 
 def DetermineCorrectness(c):
@@ -1570,6 +1584,7 @@ def CreateScramble():
 
     #return c
     return s
+    #return ["L'", "F2", "D'", "R", "L'", "U'", "D'", "R2", "D'", "F", "D", "U", "L'", "F", "L2", "R'", "U'", "F", "B'", "R'", "B'", "D", "U'", "B", "L'", "B'"]
     #return ["L", "F'", "L'", "U'", "L'", "D2", "L'", "R'", "D", "R'", "F", "D", "F", "L'", "B'", "U", "F'", "U'", "D", "L", "F'", "B", "U", "B", "U", "L'", "U", "F"]
     #return ["L", "D", "R", "D'", "R", "F2", "B'", "D", "U", "R'", "U", "F'", "L'", "B", "L", "F'", "D'", "L2", "U'", "D", "R2", "L", "F'", "D", "R'", "U'", "F"]
     #return ["R2", "L2", "F2", "B"]
