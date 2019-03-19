@@ -1011,6 +1011,7 @@ class Cube:
 
         while True:
             top_bits = []
+        #steps += len(alg)
             side_bits = []
             num_top_bits = 0
 
@@ -1419,7 +1420,7 @@ def main():
     root.addChild(three)
     print(root)"""
 
-    """steps = 0
+    steps = 0
     start = time.time()
     c = Cube()
     scramble = CreateScramble()
@@ -1472,9 +1473,9 @@ def main():
         print(np)
     print("")
     print("Time taken: " + str(total))
-    print("Steps taken: " + str(steps))"""
+    print("Steps taken: " + str(steps))
 
-    total = 0
+    """total = 0
     steps = 0
     #start = time.time()
     #print("Starting")
@@ -1530,7 +1531,7 @@ def main():
         if len(pll) > 0:
             print(np)
         print("")
-    print("Time taken: " + str(total))
+    print("Time taken: " + str(total))"""
     #print("Total turns: " + str(steps))
     #print("Average time take: " + str(total/100))
 
