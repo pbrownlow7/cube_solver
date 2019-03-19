@@ -1419,7 +1419,8 @@ def main():
     root.addChild(three)
     print(root)"""
 
-    """start = time.time()
+    steps = 0
+    start = time.time()
     c = Cube()
     scramble = CreateScramble()
     ns = listToStr(scramble)
@@ -1434,6 +1435,7 @@ def main():
 
     cross = c.SolveCross()
     nc = listToStr(cross)
+    steps += len(cross)
     #print(nc)
 
     opt_f2l = c.OptimisedF2L()
@@ -1442,14 +1444,17 @@ def main():
         a = alg.split(" ")
         for r in a:
             c.RotateWithNotation(r)
+            steps += 1
 
     oll = c.SolveOLL()
+    steps += len(oll)
     #print(oll)
     if len(oll) > 0:
         no = listToStr(oll)
     #print(no)
 
     pll = c.SolvePLL()
+    steps += len(pll)
     #print(pll)
     if len(pll) > 0:
         np = listToStr(pll)
@@ -1466,9 +1471,10 @@ def main():
     if len(pll) > 0:
         print(np)
     print("")
-    print("Time taken: " + str(total))"""
+    print("Time taken: " + str(total))
+    print("Steps taken: " + str(steps))
 
-    total = 0
+    """total = 0
     steps = 0
     #start = time.time()
     #print("Starting")
@@ -1524,7 +1530,7 @@ def main():
         if len(pll) > 0:
             print(np)
         print("")
-    print("Time taken: " + str(total))
+    print("Time taken: " + str(total))"""
     #print("Total turns: " + str(steps))
     #print("Average time take: " + str(total/100))
 
