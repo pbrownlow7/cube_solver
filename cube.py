@@ -623,17 +623,17 @@ class Cube:
         #    print("F2L PAIR " + str(i+1) + ":")
         #    self._searchForF2L()
 
-    def _searchForF2L(self):
+    """def _searchForF2L(self):
         cross_colour = "O"
         slot_deciders = [(14, 23), (23, 32), (32, 46), (46, 14)]
         slots = [(36, 13, 24, 12, 25), (38, 22, 33, 21, 34), (40, 31, 47, 30, 48), (42, 45, 15, 52, 16)]
-        """corner_positions = {0:[51, 9], 2:[49, 39], 6:[11, 18], 4:[20, 27], \
+        corner_positions = {0:[51, 9], 2:[49, 39], 6:[11, 18], 4:[20, 27], \
                             9:[0, 51], 11:[6, 18], 15:[42, 45], 13:[24, 36], \
                             18:[6, 11], 20:[4, 27], 24:[13, 36], 22:[33, 38], 27:[4, 20],\
                             29:[2, 49], 33:[22, 38], 31:[40, 47], 36:[24, 13], 38:[22, 33],\
                             42:[15, 45], 40:[31, 47], 45:[15, 42], 47:[40, 31], 51:[0, 9], 49:[2, 29]}
         side_positions = {1:50, 3:28, 5:19, 7:10, 10:7, 12:25, 16:52, 19:5, 21:34, \
-                          25:12, 28:3, 30:48, 34:21, 50:1, 52:16, 48:30}"""
+                          25:12, 28:3, 30:48, 34:21, 50:1, 52:16, 48:30}
 
         corner_positions = {0:[9, 51], 9:[51, 0], 51:[0, 9], 2:[49, 29], 49:[29, 2], 29:[2, 49], \
                             4:[27, 20], 27:[20, 4], 20:[4, 27], 6:[18, 11], 18:[11, 6], 11:[6, 18], \
@@ -660,14 +660,14 @@ class Cube:
                 corner[1] = (self._cube[corner_positions[k][0]].colour, corner_positions[k][0])
                 corner[2] = (self._cube[corner_positions[k][1]].colour, corner_positions[k][1])
 
-                """corners[found][0] = k
+                corners[found][0] = k
                 c1_position = corner_positions[k][0]
                 c1_colour = self._cube[c1_position].colour
                 corners[found][1] = (c1_colour, c1_position)
 
                 c2_position = corner_positions[k][1]
                 c2_colour = self._cube[c2_position].colour
-                corners[found][2] = (c2_colour, c2_position)"""
+                corners[found][2] = (c2_colour, c2_position)
 
                 for sk in side_positions.keys():
                     s2_position = side_positions[sk]
@@ -683,7 +683,7 @@ class Cube:
 
                 pair = [corner[0], corner[1], corner[2], side[0], side[1], 0, 0, 0, 0, 0]
 
-                """for sk in side_positions.keys():
+                for sk in side_positions.keys():
                     s2_position = side_positions[sk]
                     s2_colour = self._cube[s2_position].colour
                     
@@ -693,7 +693,7 @@ class Cube:
                         sides[found][0] = (s1_colour, s1_position)
 
                         sides[found][1] = (s2_colour, s2_position)
-                        break"""
+                        break
                 
 
                 s = 0
@@ -735,7 +735,7 @@ class Cube:
                 #if found == 4:
                 #    break
 
-        """s = 0
+        s = 0
         c1 = None
         c2 = None
         s1 = None
@@ -1419,7 +1419,7 @@ def main():
     root.addChild(three)
     print(root)"""
 
-    steps = 0
+    """steps = 0
     start = time.time()
     c = Cube()
     scramble = CreateScramble()
@@ -1472,9 +1472,9 @@ def main():
         print(np)
     print("")
     print("Time taken: " + str(total))
-    print("Steps taken: " + str(steps))
+    print("Steps taken: " + str(steps))"""
 
-    """total = 0
+    total = 0
     steps = 0
     #start = time.time()
     #print("Starting")
@@ -1530,7 +1530,7 @@ def main():
         if len(pll) > 0:
             print(np)
         print("")
-    print("Time taken: " + str(total))"""
+    print("Time taken: " + str(total))
     #print("Total turns: " + str(steps))
     #print("Average time take: " + str(total/100))
 
@@ -1787,6 +1787,7 @@ def CreateScramble():
 
     #return c
     return s
+    #return ["R'", "B'", "R", "L'", "U'", "L'", "B", "R", "B", "F'", "R'", "U2", "B", "L", "R", "B", "U2", "B'", "D", "U'", "B'", "U'", "F2", "B'", "R", "L'", "U'"]
     #return ["R'", "D", "L'", "R", "U", "L", "B", "L'", "U'", "L'", "D", "U", "B", "F'", "U", "D'", "L", "U", "D", "R'", "L'", "D'", "F'", "L'", "U", "L", "F'", "L", "U'", "L'"]
     #return ["U'", "R'", "B'", "R", "B'", "D'", "R'", "D2", "F'", "R'", "L'", "D", "B", "U", "D", "R", "F'", "L'", "D'", "B2", "R", "U", "B", "F2", "R'", "L'", "D'"]
     #return ["L'", "F2", "D'", "R", "L'", "U'", "D'", "R2", "D'", "F", "D", "U", "L'", "F", "L2", "R'", "U'", "F", "B'", "R'", "B'", "D", "U'", "B", "L'", "B'"]
