@@ -9,6 +9,7 @@ def fillDB():
     for line in f:
         l = line.split("\n")[0].split("\r")[0]
         alg = f2.readline().split("\n")[0].split("\r")[0]
+
         r.set(l, alg)
         #print(r.get(l))
 

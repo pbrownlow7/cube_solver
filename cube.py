@@ -2,6 +2,7 @@ import math
 import time
 import random
 import redis
+import copy
 
 class Graph():
 
@@ -278,12 +279,16 @@ class Cube:
             coloured_positions = positions[0][1]
             for i in positions[1]:
                 cross_turns.append(i)
-            correct = 0
-            for i in bottom_layer:
-                cube_i = self._graph.getElements(i)[1]
-                if self._cube[cube_i].colour == cross_colour:
-                    correct += 1
-            if correct == 4:
+            anchor_targets = self._getAnchorTargets(cross_positions, coloured_positions, anchor_index)
+            in_position = self._findInPosition(anchor_targets, cross_positions, coloured_positions)
+            in_position.append(coloured_positions[anchor_index][2])
+            #print(in_position)
+            #correct = 0
+            #for i in bottom_layer:
+            #    cube_i = self._graph.getElements(i)[1]
+            #    if self._cube[cube_i].colour == cross_colour:
+            #        correct += 1
+            if len(in_position) == 4:
                 cross_solved = True
 
         buddy = self._graph.getBuddy(bottom_layer[0])
@@ -772,8 +777,40 @@ class Cube:
         #    self.RotateWithNotation(r)
 
     def OptimisedF2L(self):
-        alg_list = []
+        all_pairs = self._optimisedF2L()
+        roots = []
+        nodes = []
+        for pair in all_pairs:
+            orig_cube = copy.deepcopy(self._cube)
+            orig_graph = copy.deepcopy(self._graph)
+            alg = self._calculatePair(pair)
+            root = Node(None, alg)
+            a = alg.split(" ")
+            for t in a:
+                self.RotateWithNotation(t)
+            new_pairs = self._optimisedF2L()
+            self._buildF2LTree(root, new_pairs, nodes)
+            roots.append(root)
+            self._cube = orig_cube
+            self._graph = orig_graph
+        paths = []
+        for n in nodes:
+            if n.leaf:
+                paths.append(self._returnPath(n))
+
+        least = None
+        path = None
+        for p in paths:
+            total = 0
+            for alg in p:
+                total += len(alg)
+            if least == None or total < least:
+                path = p
+        return path
+        """alg_list = []
         pairs1 = self._optimisedF2L()
+        print("p1")
+        print(pairs1)
         for i1 in range(len(pairs1)):
             p1 = []
             alg1 = self._calculatePair(pairs1[i1])
@@ -815,6 +852,8 @@ class Cube:
                         self.RotateWithNotation(r3)
                     #alg_list = alg_list + [p3]
                     pairs4 = self._optimisedF2L()
+                    print("p4")
+                    print(pairs4)
                     for i4 in range(len(pairs4)):
                         p4 = p3
                         alg4 = self._calculatePair(pairs4[i4])
@@ -839,6 +878,8 @@ class Cube:
 
         least = 0
         least_num = 0
+        print("HHH")
+        print(alg_list)
         for i in range(len(alg_list)):
             turns = 0
             for j in range(len(alg_list[i])):
@@ -846,7 +887,7 @@ class Cube:
             if turns < least_num or least_num == 0:
                 least = i
                 least_num = turns
-        return alg_list[least]
+        return alg_list[least]"""
 
     def _optimisedF2L(self):
         cross_colour = "O"
@@ -917,6 +958,45 @@ class Cube:
                     all_pairs.append(pair)
 
         return all_pairs
+
+    """def _executeAlg(self, pair, path, index):
+        alg = self._calculatePair(pair)
+        path.append([alg])
+        print(alg)
+        a = alg.split(" ")
+        #print("JJJ")
+        #print(alg)
+        for t in a:
+            self.RotateWithNotation(t)
+        new_pairs = self._optimisedF2L()
+        print(new_pairs)"""
+
+    def _buildF2LTree(self, parent, pair_list, nodes):
+        for pair in pair_list:
+            alg = self._calculatePair(pair)
+            new_alg = Node(parent, alg)
+            parent.addChild(new_alg)
+            parent.switchLeaf()
+            nodes.append(new_alg)
+            old_cube = copy.deepcopy(self._cube)
+            old_graph = copy.deepcopy(self._graph)
+            a = alg.split(" ")
+            for t in a:
+                self.RotateWithNotation(t)
+            new_pair_list = self._optimisedF2L()
+            if len(new_pair_list) > 0:
+                self._buildF2LTree(new_alg, new_pair_list, nodes)
+            
+            self._cube = old_cube
+            self._graph = old_graph
+
+    def _returnPath(self, leaf):
+        node = leaf
+        p = []
+        while node:
+            p = [node.alg] + p
+            node = node.parent
+        return p
 
     def SolveOLL(self):
         return self._solveOLL()
@@ -1178,6 +1258,12 @@ class Cube:
         #print(solution)
         #print(new_solution)
         return new_solution
+
+    def __getstate__(self):
+        return self.__dict__
+    
+    def __setstate__(seld, d):
+        self.__dict__.update(d)
             
     def __str__(self):
         return self._representCube()
@@ -1234,6 +1320,59 @@ class Queue:
                 return True
         return False
 
+class Node:
+
+    def __init__(self, parent, alg):
+        self._parent = parent
+        self._children = []
+        self._alg = alg
+        self._leaf = True
+
+    def getParent(self):
+        return self._parent
+
+    def setParent(self, p):
+        self._parent = p
+
+    def getChildren(self):
+        return self._children
+
+    def addChild(self, c):
+        self._children.append(c)
+
+    def getAlg(self):
+        return self._alg
+
+    def setAlg(self, a):
+        self._alg = a
+
+    def getLeaf(self):
+        return self._leaf
+
+    def switchLeaf(self):
+        self._leaf = not self._leaf
+
+    def __str__(self):
+        strDesc = ""
+        if self.parent:
+            strDesc += self.parent.alg
+        else:
+            strDesc += "None"
+
+        strDesc += " ---> " + self.alg + " ---> |"
+
+        for item in self.children:
+            strDesc += "| " + item.alg + " "
+
+        strDesc += "||"
+
+        return strDesc
+
+    parent = property(getParent, setParent)
+    children = property(getChildren)
+    alg = property(getAlg, setAlg)
+    leaf = property(getLeaf)
+
 def listPosition(face, face_position):
     return (9 * face) + face_position
 
@@ -1271,12 +1410,16 @@ def listToStr(l):
 
 def main():
 
-    total = 0
-    steps = 0
-    #start = time.time()
-    #print("Starting")
-    #for i in range(100):
-    start = time.time()
+    """root = Node(None, "1")
+    one = Node(root, "2")
+    two = Node(root, "3")
+    three = Node(root, "4")
+    root.addChild(one)
+    root.addChild(two)
+    root.addChild(three)
+    print(root)"""
+
+    """start = time.time()
     c = Cube()
     scramble = CreateScramble()
     ns = listToStr(scramble)
@@ -1289,29 +1432,25 @@ def main():
     print("")
     print("SOLVE:")
 
-    #start = time.time()
-
     cross = c.SolveCross()
-    steps += len(cross)
     nc = listToStr(cross)
     #print(nc)
 
     opt_f2l = c.OptimisedF2L()
     for alg in opt_f2l:
-        a = alg.split(" ")
         #print(alg)
+        a = alg.split(" ")
         for r in a:
-            steps += 1
             c.RotateWithNotation(r)
 
     oll = c.SolveOLL()
-    steps += len(oll)
+    #print(oll)
     if len(oll) > 0:
         no = listToStr(oll)
     #print(no)
 
     pll = c.SolvePLL()
-    steps += len(pll)
+    #print(pll)
     if len(pll) > 0:
         np = listToStr(pll)
 
@@ -1327,8 +1466,66 @@ def main():
     if len(pll) > 0:
         print(np)
     print("")
+    print("Time taken: " + str(total))"""
+
+    total = 0
+    steps = 0
+    #start = time.time()
+    #print("Starting")
+    for i in range(1000):
+        start = time.time()
+        c = Cube()
+        scramble = CreateScramble()
+        ns = listToStr(scramble)
+        print("SCRAMBLE:")
+        print(ns)
+
+        for r in scramble:
+            c.RotateWithNotation(r)
+
+        print("")
+        print("SOLVE:")
+
+    #start = time.time()
+
+        cross = c.SolveCross()
+        #steps += len(cross)
+        nc = listToStr(cross)
+    #print(nc)
+
+        opt_f2l = c.OptimisedF2L()
+        for alg in opt_f2l:
+            a = alg.split(" ")
+        #print(alg)
+            for r in a:
+                #steps += 1
+                c.RotateWithNotation(r)
+
+        oll = c.SolveOLL()
+        #steps += len(oll)
+        if len(oll) > 0:
+            no = listToStr(oll)
+    #print(no)
+
+        pll = c.SolvePLL()
+        #steps += len(pll)
+        if len(pll) > 0:
+            np = listToStr(pll)
+
+        fin = time.time()
+
+        total += fin - start
+
+        print(nc)
+        for alg in opt_f2l:
+            print(alg)
+        if len(oll) > 0:
+            print(no)
+        if len(pll) > 0:
+            print(np)
+        print("")
     print("Time taken: " + str(total))
-    print("Total turns: " + str(steps))
+    #print("Total turns: " + str(steps))
     #print("Average time take: " + str(total/100))
 
 def DetermineCorrectness(c):
@@ -1519,7 +1716,7 @@ def EnterScramble():
         c.RotateWithNotation(i)
     c._readable_solution = []
     #print(c)
-    return c
+    return c#
 
 def CreateScramble():
     c = Cube()
@@ -1570,7 +1767,7 @@ def CreateScramble():
     #s = ["B'", "F'", "L'", "U", "B", "U", "D", "R'", "D", "U", "L", "D'", "R", "L", "D", "U'", "L'", "U'", "L'", "B"]
 
     s = c._cleanUpSolution(s)
-
+#
     #for x in s:
     #    c.RotateWithNotation(x)
     c._readable_solution = []
@@ -1584,6 +1781,8 @@ def CreateScramble():
 
     #return c
     return s
+    #return ["R'", "D", "L'", "R", "U", "L", "B", "L'", "U'", "L'", "D", "U", "B", "F'", "U", "D'", "L", "U", "D", "R'", "L'", "D'", "F'", "L'", "U", "L", "F'", "L", "U'", "L'"]
+    #return ["U'", "R'", "B'", "R", "B'", "D'", "R'", "D2", "F'", "R'", "L'", "D", "B", "U", "D", "R", "F'", "L'", "D'", "B2", "R", "U", "B", "F2", "R'", "L'", "D'"]
     #return ["L'", "F2", "D'", "R", "L'", "U'", "D'", "R2", "D'", "F", "D", "U", "L'", "F", "L2", "R'", "U'", "F", "B'", "R'", "B'", "D", "U'", "B", "L'", "B'"]
     #return ["L", "F'", "L'", "U'", "L'", "D2", "L'", "R'", "D", "R'", "F", "D", "F", "L'", "B'", "U", "F'", "U'", "D", "L", "F'", "B", "U", "B", "U", "L'", "U", "F"]
     #return ["L", "D", "R", "D'", "R", "F2", "B'", "D", "U", "R'", "U", "F'", "L'", "B", "L", "F'", "D'", "L2", "U'", "D", "R2", "L", "F'", "D", "R'", "U'", "F"]

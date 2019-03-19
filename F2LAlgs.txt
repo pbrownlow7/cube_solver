@@ -1528,3 +1528,5 @@ L U L' U L U L'
 U B' U2 B U' L U L'
 U2 L U' L' U L U L'
 U2 L U L'
+L U' L' U' F' U F U L' U L
+L U' L' U' F' U' F2 U F'
