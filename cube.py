@@ -1,7 +1,7 @@
 import math
 import time
 import random
-#import redis
+import redis
 import copy
 
 class Graph():
@@ -85,9 +85,9 @@ class Cube:
         self._not_effected = {"R":"L", "L":"R", "U":"D", "D":"U", "F":"B", "B":"F"}
         self._cube = self._createCube()
         self._readable_solution = []
-        #self._r = redis.Redis(host='localhost', port=6379, db=0)
-        #self._oll_r = redis.Redis(host='localhost', port=6379, db=1)
-        #self._pll_r = redis.Redis(host='localhost', port=6379, db=2)
+        self._r = redis.Redis(host='localhost', port=6379, db=0)
+        self._oll_r = redis.Redis(host='localhost', port=6379, db=1)
+        self._pll_r = redis.Redis(host='localhost', port=6379, db=2)
 
         self._wide_rotations = {"u":('0', 0, '5', 0), "u'":('0', 1, '5', 1), "d":('16', 0, '5', 1), "d'":('16', 1, '5', 0),
                                "l":('3', 2, '0', 0), "l'":('3', 3, '0', 1), "r":('1', 2, '0', 1), "r'":('1', 3, '0', 0),
@@ -282,6 +282,8 @@ class Cube:
         while not cross_solved:
             anchor_targets = self._getAnchorTargets(cross_positions, coloured_positions, anchor_index)
             both_paths = self._decideOnBestPath(anchor_targets, cross_positions, coloured_positions, anchor_index)
+            if not both_paths:
+                break
             in_position = self._findInPosition(anchor_targets, cross_positions, coloured_positions)
             in_position.append(coloured_positions[anchor_index][2])
             correct_path = self._decidePath(both_paths, in_position)
@@ -293,12 +295,6 @@ class Cube:
             anchor_targets = self._getAnchorTargets(cross_positions, coloured_positions, anchor_index)
             in_position = self._findInPosition(anchor_targets, cross_positions, coloured_positions)
             in_position.append(coloured_positions[anchor_index][2])
-            #print(in_position)
-            #correct = 0
-            #for i in bottom_layer:
-            #    cube_i = self._graph.getElements(i)[1]
-            #    if self._cube[cube_i].colour == cross_colour:
-            #        correct += 1
             if len(in_position) == 4:
                 cross_solved = True
 
@@ -664,6 +660,8 @@ class Cube:
         bottom_layer = ['16', '17', '18', '19']
         exclude = self._findInPosition(anchor_targets, cross_positions, coloured_positions)
         exclude.append(coloured_positions[anchor_index][2])
+        if len(exclude) == 4:
+            return None
         path_to_bottom = []
         target_to_position = []
         for i in range(len(cross_positions)):
@@ -786,100 +784,26 @@ class Cube:
         Returns the path to take to solve the F2L stage of the solve in the fewest number of turns based on the cross solve
         """
         
-        self._optimisedF2L()
+        #iself._optimisedF2L()
+        return self._solveF2L()
 
-    def NonOptF2L(self):
+    def _solveF2L(self):#def NonOptF2L(self):
         """
         Returns the path to take to solve the F2L stage in the quickest time, not taking into account the number of turns
         """
 
         algs = []
-        pair = self._optimisedF2L()[0]
+        pairs = self._getF2LPairs()#self._optimisedF2L()[0]
             
-        while pair != []:
-            alg = self._calculatePair(pair)
+        while pairs != []:
+            alg = self._calculatePair(pairs[0])
             algs.append(alg)
             a = alg.split(" ")
             for t in a:
                 self.RotateWithNotation(t)
-            pair = self._optimisedF2L()
-            
+            pairs = self._getF2LPairs()#self._optimisedF2L()
+           
         return algs
-
-    """def _searchForF2L(self):
-        algs = []
-        cross_colour = "O"
-        slot_deciders = [(14, 23), (23, 32), (32, 46), (46, 14)]
-        slots = [(36, 13, 24, 12, 25), (38, 22, 33, 21, 34), (40, 31, 47, 30, 48), (42, 45, 15, 52, 16)]
-        corner_positions = {0:[9, 51], 9:[51, 0], 51:[0, 9], 2:[49, 29], 49:[29, 2], 29:[2, 49], \
-                            4:[27, 20], 27:[20, 4], 20:[4, 27], 6:[18, 11], 18:[11, 6], 11:[6, 18], \
-                            13:[24, 36], 24:[36, 13], 36:[13, 24], 45:[15, 42], 15:[42, 45], 42:[45, 15], \
-                            31:[47, 40], 47:[40, 31], 40:[31, 47], 22:[33, 38], 33:[38, 22], 38:[22, 33]}
-
-        side_positions = {1:50, 3:28, 5:19, 7:10, 10:7, 12:25, 16:52, 19:5, 21:34, \
-                          25:12, 28:3, 30:48, 34:21, 50:1, 52:16, 48:30}
-        
-        corner = [0, 0, 0]
-        side= [0, 0]
-        pair = []
-        found = 0
-
-        while found < 4:
-            for k in corner_positions.keys():
-                if self._cube[k].colour == cross_colour:
-                    corner[0] = k
-                    corner[1] = (self._cube[corner_positions[k][0]].colour, corner_positions[k][0])
-                    corner[2] = (self._cube[corner_positions[k][1]].colour, corner_positions[k][1])
-
-                    for sk in side_positions.keys():
-                        s2_position = side_positions[sk]
-                        s2_colour = self._cube[s2_position].colour
-                        
-                        if self._cube[sk].colour == corner[1][0] and s2_colour == corner[2][0]:
-                            s1_position = sk
-                            s1_colour = self._cube[sk].colour
-                            side[0] = (s1_colour, s1_position)
-                            side[1] = (s2_colour, s2_position)
-
-                            break
-
-                    pair = [corner[0], corner[1], corner[2], side[0], side[1], 0, 0, 0, 0, 0]
-
-                    s = 0
-                    c1 = None
-                    c2 = None
-                    s1 = None
-                    s2 = None
-                    while s < len(slot_deciders):
-                        if pair[1][0] == self._cube[slot_deciders[s][0]].colour and pair[2][0] == self._cube[slot_deciders[s][1]].colour:
-                            c1 = slots[s][1]
-                            c2 = slots[s][2]
-                            s1 = slots[s][3]
-                            s2 = slots[s][4]
-                            break
-                        elif pair[1][0] == self._cube[slot_deciders[s][1]].colour and pair[2][0] == self._cube[slot_deciders[s][0]].colour:
-                            c1 = slots[s][2]
-                            c2 = slots[s][1]
-                            s1 = slots[s][4]
-                            s2 = slots[s][3]
-                            break
-                        s += 1
-
-                    pair[5] = slots[s][0]
-                    pair[6] = c1
-                    pair[7] = c2
-                    pair[8] = s1
-                    pair[9] = s2
-
-                    total = abs(pair[0] - pair[5]) + abs(pair[1][1] - pair[6]) + abs(pair[2][1] - pair[7]) + abs(pair[3][1] - pair[8]) + abs(pair[4][1] - pair[9])
-
-                    
-                    If total is 0 then the pair has already be inserted
-                    
-                    if total != 0:
-                        alg = self._calculatePair(pair)
-                        algs.append
-                        return alg"""
 
     def _calculatePair(self, pair):
         """
@@ -895,59 +819,7 @@ class Cube:
         alg = self._r.get(val)
         return alg
 
-    def OptimisedF2L(self):
-        """
-        Returns the series of F2L algorithms that has the shortest number of steps. It does so recursively. First it gets all of the F2L pairs for the current cube
-        configuration. It then goes through these pairs one by one and builds a tree which contains all possible F2L algorithms that occur after executing that
-        algorithm. This tree has the following structure: the root of the tree is the first algorithm to be executed, then it takes the next series of pairs and adds
-        them as its children, and then it does so recursively for each of the children and the children's children until there are no F2L pairs left. It then goes
-        through the leaves of the tree and builds upwards to the root to form the path of each of the possible solutions. Finally it takes the shortest of these paths
-        and returns it
-
-        VARIABLES:
-        all_pairs - the initial F2L pair coordinates that form the roots of each of the trees (one per pair)
-        roots - the root nodes of the trees
-        nodes - each node in every tree, to keep track of which ones are leaves
-        orig_cube - a snapshot of the cube's configuration so it can test out all the algorithms at that level
-        orig_graph - a snapshot of the graph's configuration
-        new_pairs - the F2L pair coordinates after the initial F2L pair's algorithm has been executed
-        least - the length of the shortest path
-        path - the shortest path
-        """
-        
-        all_pairs = self._optimisedF2L()
-        roots = []
-        nodes = []
-        for pair in all_pairs:
-            orig_cube = copy.deepcopy(self._cube)
-            orig_graph = copy.deepcopy(self._graph)
-            alg = self._calculatePair(pair)
-            root = Node(None, alg)
-            a = alg.split(" ")
-            for t in a:
-                self.RotateWithNotation(t)
-            new_pairs = self._optimisedF2L()
-            self._buildF2LTree(root, new_pairs, nodes)
-            roots.append(root)
-            self._cube = orig_cube
-            self._graph = orig_graph
-        paths = []
-        for n in nodes:
-            if n.leaf:
-                paths.append(self._returnPath(n))
-
-        least = None
-        path = None
-        for p in paths:
-            total = 0
-            for alg in p:
-                total += len(alg)
-            if least == None or total < least:
-                least = total
-                path = p
-        return path
-
-    def _optimisedF2L(self):
+    def _getF2LPairs(self):#def _optimisedF2L(self):
         """
         Returns all unsolved F2L pair coordinates. First goes through each corner position on the cube to test for a corner piece (one that has a cross colour on it),
         taking note of the position of each of the stickers that are a part of that piece. It then finds the corresponding side piece for the corner, based on the non
@@ -1041,56 +913,6 @@ class Cube:
 
         return all_pairs
 
-    def _buildF2LTree(self, parent, pair_list, nodes):
-        """
-        Algorithm to build the tree of all possible algorithms that can occur after a certain initial F2L algorithm. Does so by looping through the F2L pairs in
-        pair_list, getting the corresponding algorithm, creates a new Node object with this algorithm and parent as the parent node, adds this node to the list of
-        children in the parent node, indicates the parent node is no longer a leaf if it has not already been done, takes a snapshot of the current cube and graph
-        configuration, executes the algorithm, gets the list of the remaining F2L pairs after this algorithm, and repeats with this new pair list if it is not empty
-
-        VARIABLES:
-        parent - the parent node of all pairs in pair_list
-        pair_list - the current list of all unsolved F2L lists of the current cube configuration
-        nodes - the list of nodes in each tree
-        new_pair_list - the list of F2L pairs after the algorithm is executed
-        """
-        
-        for pair in pair_list:
-            alg = self._calculatePair(pair)
-            new_alg = Node(parent, alg)
-            parent.addChild(new_alg)
-            parent.switchLeaf()
-            nodes.append(new_alg)
-            old_cube = copy.deepcopy(self._cube)
-            old_graph = copy.deepcopy(self._graph)
-            a = alg.split(" ")
-            for t in a:
-                self.RotateWithNotation(t)
-            new_pair_list = self._optimisedF2L()
-            if len(new_pair_list) > 0:
-                self._buildF2LTree(new_alg, new_pair_list, nodes)
-            
-            self._cube = old_cube
-            self._graph = old_graph
-
-    def _returnPath(self, leaf):
-        """
-        Returns the list of F2L algorithms based on the provided leaf node. It simply adds the algorithm associated with the current node, which starts with the
-        provided leaf, makes the current node the parent of the node until eventually the node is set to None, which is the parent of the root node
-
-        VARIABLES:
-        leaf - the leaf node that is the last algorithm of the particular F2L path
-        node - the current node to be added to the path
-        p - the path to be returned
-        """
-        
-        node = leaf
-        p = []
-        while node:
-            p = [node.alg] + p
-            node = node.parent
-        return p
-
     def SolveOLL(self):
         """
         Returns the algorithm to solve the OLL stage
@@ -1156,7 +978,7 @@ class Cube:
             alg = self._oll_r.get(str(alg_value))
             if alg != None:
                 if stats:
-                    f = open("oll_stats.txt", "a")
+                    f = open("oll_stats.txt", "a+")
                     top = ""
                     side = ""
                     for i in top_bits:
@@ -1253,11 +1075,11 @@ class Cube:
                 self.RotateWithNotation("U")
 
         if stats:
-            f = open("pll_stats.txt", "a")
+            f = open("pll_stats.txt", "a+")
             side = ""
             for lis in l:
                 for item in lis:
-                    side += item
+                    side += str(item)
             f.write(side + "\n")
             f.close()
 
@@ -1302,25 +1124,6 @@ class Cube:
                 t = turns[0]
 
         return t
-
-    """def _returnCornerBuddies(self, state, position):
-        buddies = []
-        buddy_position = 0
-        if position == 0:
-            buddy_position = 2
-        buddies.append(self._cube[self._graph._elements[self._graph.getBuddy(state)][0][buddy_position]].colour)
-        if position == 0:
-            state = self._graph._elements[str(state)][1][1]
-        else:
-            state = self._graph._elements[str(state)][1][0]
-        buddies.append(self._cube[self._graph._elements[self._graph.getBuddy(state)][0][position]].colour)
-        return (buddies[0], buddies[1])"""
-
-    """def _findCenter(self, colour):
-        for index in range(12):
-            index = str(index)
-            if self._cube[self._middle.getElements(index)[1]].colour == colour:
-                return self._middle.getElements(index)[1]"""
 
     def _translateToNotation(self, state, op):
         """
@@ -1546,50 +1349,31 @@ def listToStr(l):
     return s
 
 def buildOLLPLLStats():
-    c = Cube()
-    scramble = CreateScramble()
+    print("Gathering OLL/PLL statistics...")
+   
+    for _ in range(10000):
+        c = Cube()
+        scramble = CreateScramble()
+        print(scramble)
     
-    for r in scramble:
-        c.RotateWithNotation(r)
+        for r in scramble:
+            c.RotateWithNotation(r)
 
-    cross = c.SolveCross()
+        cross = c.SolveCross()
 
-    oll = c._ollStats()
+        f2l = c.SolveF2L()
 
-    pll = c._pllStats()
+        oll = c._ollStats()
 
-def main():
+        pll = c._pllStats()
 
-    print("Hello")
+    print("FIN")
 
-    """c = Cube()
-    scramble = ["B", "U", "R", "L"]
-    #scramble = CreateScramble()
-    ns = listToStr(scramble)
-    print("SCRAMBLE:")
-    print(ns)
-
-    for r in scramble:
-        c.RotateWithNotation(r)
-
-    start = time.time()
-    c.ExhaustiveSearch()
-    fin = time.time()
-    print("Time taken: " + str(fin-start))"""
-
-    """root = Node(None, "1")
-    one = Node(root, "2")
-    two = Node(root, "3")
-    three = Node(root, "4")
-    root.addChild(one)
-    root.addChild(two)
-    root.addChild(three)
-    print(root)"""
-
-    """steps = 0
+def SolveCube():
     start = time.time()
     c = Cube()
     scramble = CreateScramble()
+    scramble = ["R", "U", "R'", "U'"]
     ns = listToStr(scramble)
     print("SCRAMBLE:")
     print(ns)
@@ -1601,28 +1385,16 @@ def main():
     print("SOLVE:")
 
     cross = c.SolveCross()
-    nc = listToStr(cross)
-    steps += len(cross)
-    #print(nc)
+    if len(cross) > 0:
+        nc = listToStr(cross)
 
-    opt_f2l = c.OptimisedF2L()
-    for alg in opt_f2l:
-        #print(alg)
-        a = alg.split(" ")
-        for r in a:
-            c.RotateWithNotation(r)
-            steps += 1
+    f2l = c.SolveF2L()
 
     oll = c.SolveOLL()
-    steps += len(oll)
-    #print(oll)
     if len(oll) > 0:
         no = listToStr(oll)
-    #print(no)
 
     pll = c.SolvePLL()
-    steps += len(pll)
-    #print(pll)
     if len(pll) > 0:
         np = listToStr(pll)
 
@@ -1630,8 +1402,9 @@ def main():
 
     total = fin - start
 
-    print(nc)
-    for alg in opt_f2l:
+    if len(cross) > 0:
+        print(nc)
+    for alg in f2l:
         print(alg)
     if len(oll) > 0:
         print(no)
@@ -1639,13 +1412,15 @@ def main():
         print(np)
     print("")
     print("Time taken: " + str(total))
-    print("Steps taken: " + str(steps))"""
 
-    """total = 0
-    steps = 0
-    #start = time.time()
-    #print("Starting")
-    for i in range(1000):
+def main():
+    #SolveCube()
+    SolveMultipleCubes(10000)
+    #buildOLLPLLStats()
+
+def SolveMultipleCubes(number):
+    total = 0
+    for i in range(number):
         start = time.time()
         c = Cube()
         scramble = CreateScramble()
@@ -1659,29 +1434,17 @@ def main():
         print("")
         print("SOLVE:")
 
-    #start = time.time()
-
         cross = c.SolveCross()
-        #steps += len(cross)
-        nc = listToStr(cross)
-    #print(nc)
+        if len(cross) > 0:
+            nc = listToStr(cross)
 
-        opt_f2l = c.OptimisedF2L()
-        for alg in opt_f2l:
-            a = alg.split(" ")
-        #print(alg)
-            for r in a:
-                #steps += 1
-                c.RotateWithNotation(r)
+        f2l = c.SolveF2L()
 
         oll = c.SolveOLL()
-        #steps += len(oll)
         if len(oll) > 0:
             no = listToStr(oll)
-    #print(no)
 
         pll = c.SolvePLL()
-        #steps += len(pll)
         if len(pll) > 0:
             np = listToStr(pll)
 
@@ -1689,205 +1452,16 @@ def main():
 
         total += fin - start
 
-        print(nc)
-        for alg in opt_f2l:
+        if len(cross) > 0:
+            print(nc)
+        for alg in f2l:
             print(alg)
         if len(oll) > 0:
             print(no)
         if len(pll) > 0:
             print(np)
         print("")
-    print("Time taken: " + str(total))"""
-
-"""def DetermineCorrectness(c):
-    state = "16"
-    for _ in range(4):
-        buddy = c._graph.getBuddy(state)
-        center = c._cube[((c._graph._elements[buddy][0][1]/9)*9)+8].colour
-        if c._cube[c._graph._elements[buddy][0][1]].colour != center or c._cube[c._graph._elements[state][0][1]].colour != "O":
-            return False
-    return True
-
-def StressTestSearchForCross():
-    c = Cube()
-    start = time.time()
-    for _ in range(10000):
-        c._searchForCross()
-    finish = time.time()
-    print(finish-start)
-
-def StressTestFaceRotation():
-    c = Cube()
-    start = time.time()
-    for _ in range(100000):
-        c.Rotate('0', 0)
-    finish = time.time()
-    print(finish-start)
-
-def StressTestMiddleRotation():
-    c = Cube()
-    start = time.time()
-    for _ in range(100000):
-        c.RotateMiddle('0', 0)
-    finish = time.time()
-    print(finish-start)
-
-def StressTestWideRotation():
-    c = Cube()
-    start = time.time()
-    for _ in range(100000):
-        c.RotateWide('0', 0, '5', 0)
-    finish = time.time()
-    print(finish-start)
-
-def StressTestCubeRotation():
-    c = Cube()
-    start = time.time()
-    for _ in range(100000):
-        c.RotateCube(0, 0)
-    finish = time.time()
-    print(finish-start)
-
-def TestBigRotationLeftClockwise():
-    c = Cube()
-    print(c)
-    for _ in range(4):
-        c.RotateBig(1, 1)
-        print(c)
-
-def TestBigRotationRightClockwise():
-    c = Cube()
-    print(c)
-    for _ in range(4):
-        c.RotateBig(1, 3)
-        print(c)
-
-def TestBigRotationRightAntiClockwise():
-    c = Cube()
-    print(c)
-    for _ in range(4):
-        c.RotateBig(-1, 3)
-        print(c)
-
-def TestMixtureOfFullAndCenterRotations():
-    c = Cube()
-    print(c)
-    c.RotateFace(1, 3)
-    print(c)
-    c.RotateFace(-1, 4)
-    print(c)
-    c.RotateCenter(1)
-    print(c)
-    c.RotateFace(1, 0)
-    print(c)
-    c.RotateCenter(-1)
-    print(c)
-    c.RotateFace(1, 2)
-    print(c)
-    return c
-
-def RetestMixturceOfFullAndCenterRotaions(c):
-    c.RotateFace(-1, 2)
-    c.RotateCenter(1)
-    c.RotateFace(-1, 0)
-    c.RotateCenter(-1)
-    c.RotateFace(1, 4)
-    c.RotateFace(-1, 3)
-    print(c)
-
-def TestCenterRotationClockwise():
-    c = Cube()
-    print(c)
-    for _ in range(4):
-        c.RotateCenter(1, 1)
-        print(c)
-
-def TestCenterRotationAntiClockwise():
-    c = Cube()
-    print(c)
-    for _ in range(4):
-        c.RotateCenter(-1, 0)
-        print(c)
-
-def TestFaceRotationClockwise():
-    c = Cube()
-    print(c)
-    for _ in range(4):
-        c._turnFace(1, 0)
-        print(c)
-
-def TestFaceRotationAntiClockwise():
-    c = Cube()
-    print(c)
-    for _ in range(4):
-        c._turnFace(-1, 0)
-        print(c)
-
-def TestNeighbourRotationClockwise():
-    c = Cube()
-    print(c)
-    for _ in range(4):
-        c._turnNeighbours(1, 0)
-        print(c)
-
-def TestNeighbourRotationAntiClockwise():
-    c = Cube()
-    print(c)
-    for _ in range(4):
-        c._turnNeighbours(-1, 0)
-        print(c)
-
-def TestFullFaceAndNeighbourRotation():
-    c = Cube()
-    print(c)
-    for _ in range(4):
-        c.RotateFace(1, 0)
-        print(c)
-
-def TestFullSexyRotation(c):
-    for _ in range(6):
-        c.RotateWithNotation("R")
-        c.RotateWithNotation("U")
-        c.RotateWithNotation("R'")
-        c.RotateWithNotation("U'")
-        #print(c)
-    for _ in range(6):
-        c.Rotate('1', 2)
-        c.Rotate('0', 0)
-        c.Rotate('1', 3)
-        c.Rotate('0', 1)
-        #print(c)
-
-def TestScramble():
-    c = Cube()
-    #s = ["D", "D", "U", "U", "R'", "B", "B", "L'", "F", "D'", "F", "F", "L", "L", "B'", "R", "R", "U'", "R", "U'", "R", "R", "D'", "R", "L", "L", "B'", "F", "F"]
-    #s = ["D", "D", "L", "B", "B", "F", "F", "R", "F", "F", "D", "D", "L'", "B", "B", "L'", "U", "R'", "B'", "U", "U", "L", "B'", "D'", "R", "D", "D", "U'"]
-    #s = ["B", "U'", "L'", "B", "L", "F'", "U'", "D", "D", "L", "F", "R'", "D", "D", "F", "R", "R", "F", "F", "R", "R", "L", "L", "F'", "R", "R"]
-    #s = ["R", "U", "R'", "L", "U'", "D", "D", "L", "L", "U'", "F", "F"]
-    s = ["R", "R", "U", "F", "F", "U'", "R", "R", "L", "U'", "D", "D", "L", "L", "U'", "F", "F", "D", "R'"]
-    #s = ["B", "U'", "L'", "B", "L", "F'", "U'", "D", "D", "L", "F", "R'", "D", "D", "F", "R", "R", "F", "F", "R", "R", "L", "L", "F'", "R", "R"]
-    for i in s:
-        c.RotateWithNotation(i)
-    c._readable_solution = []
-    print(s)
-    #print(c)
-    return c
-    #print(c)
-
-def EnterScramble():
-    c = Cube()
-    move = "placeholder"
-    s = []
-    while(move != ""):
-        move = raw_input()
-        if move != "":
-            s.append(move)
-    #print(s)
-    for i in s:
-        c.RotateWithNotation(i)
-    c._readable_solution = []
-    #print(c)
-    return c#"""
+    print("Time taken: " + str(total))
 
 def CreateScramble():
     c = Cube()
@@ -1922,7 +1496,8 @@ def CreateScramble():
 
     c._readable_solution = []
 
-    return s
+    #return s
+    return ['D', "L'", 'R', "U'", 'F', 'U', "B'", 'F', "L'", "B'", 'U', 'L', 'U', "R'", 'B', 'D', 'U', "F'", 'L2', "F'", 'D', 'U', "R'", 'U2', 'D', 'L', 'F2']
 
 """def TestLayerRotation(d, l):
     c = Cube()
