@@ -57,8 +57,23 @@ def buildGraph(f_name):
 class Cube:
 
     """
-    Cube is the main cube and holds all the functions for representing the cube and manipulating the cube.
+    Cube is the main cube and holds all the functions for representing and manipulating the cube.
 
+    VARIABLES:
+    _graph - a graph representing the cube. It has the structure of a node being a group of three stickers on the cube and the edges are all the possible nodes that
+             can be reached from that node.
+    _middle - a graph representing the middle part of the cube. It has the same structure as _graph
+    _opposites - maps a colour of a face to the face colour on the opposite side of the cube
+    _translation - maps a face colour to its letter representation for rotation
+    _inverts - the opposite rotation to a letter representation
+    _not_effected - maps a letter representation to the letter representation that is not affected by its rotation
+    _cube - a list representing the stickers on the cube
+    _r - the database that holds the F2L algorithms
+    _oll_r - the database that holds the OLL algorithms
+    _pll_r - the database that holds the PLL algorithms
+    _wide_rotations - maps the letter representation of a wide rotation to its parameters for rotation
+    _face_rotations - maps the letter representation of a face rotation to its parametes for rotation
+    _cube_rotations - maps the letter representation of a cube rotation to its parameters for rotation
     """
 
     def __init__(self):
@@ -132,11 +147,6 @@ class Cube:
             else:
                 for _ in range(rotates):
                     self.RotateMiddle(face[0], face[1])
-        #else:
-        #    if letter[-1] == "'":
-        #        self.RotateMiddle(0, 1)
-        #    else:
-        #        self.RotateMiddle(0, 0)
 
     def _rotate(self, index, op, graph):
         elems = []
@@ -218,6 +228,7 @@ class Cube:
         correct position so they don't get moved. This is repeated until every cross square is in the bottom layer in the correct position inrespect to the other
         cross squares. Then the bottom layer is turned until it's in the correct position.
 
+        #VARIABLES:
         cross_turns - the turns undertaken while solving the cross
         positions - the positions of the cross squares in the form (x, y) where x is the index in _graph and y is the index in _cube. positions[0] is the cross colour
                     sticker positions, positions[1] is the corresponding colour sticker positions for those squares
@@ -336,6 +347,7 @@ class Cube:
         keeps the positioning of the squares in positions consistent for simplicity for other functions. Returns the updated values for cross_positions and
         coloured_positions and the letter representation of the moves taken
 
+        #VARIABLES:
         old_cross - holds the values of the old cross positions
         old_coloured - holds the values of the old coloured stickers of each cross square
         collisions - holds the values of any collisions that happen during turning
@@ -375,6 +387,7 @@ class Cube:
         Runs through _graph checking if the elements in the center of the node is the same as cross_colour, taking note of their index in _graph and _cube. It also
         takes note of the positions of the corresponding colour sticker, along with the colour of the sticker. Returns these values
 
+        #VARIABLES:
         cross_positions - the index of the cross square in _graph and _cube
         buddy_positions - the index of the corresponding colour sticker in _graph and _cube, as well as the colour
         """
@@ -396,6 +409,7 @@ class Cube:
         Runs through _graph looking for cross squares and takes note of the distance of each of these squares to the bottom layer. Returns the index (in
         cross_positions) of the closest square and the path to the bottom_layers
 
+        #VARIABLES:
         distances - the paths of each of the cross squares to the bottom_layer
         closest - the number of moves of the closest square
         index - the index of the closest square
@@ -414,6 +428,22 @@ class Cube:
         return (index, distances[index])
 
     def _bfs(self, initial, target):
+        """
+        Implementation of the Breadth-First Search algorithm to search for the shortest path between a cross square and its target position in the bottom layer. First
+        has to check if the initial square is in the bottom layer, because if it is then it will not be able to find a correct path to its target, so it must be
+        moved out. After that it then runs the actual Breadth-First Search algorithm, returning the path to it.
+
+        #VARIABLES:
+        bottom_layer - used to check if the square is in the bottom layer
+        found - bool to tell if the target has been found
+        target_found - the index in _graph of the target when it is found
+        q - queue used to keep track of the next node to check
+        path - the path taken from each node, the key is the node and the value is the node from which you came from to get to the current node
+        visited - a list of all the visited nodes so we don't continuously check the same node
+        current - the current node to check
+        neigh - the neighbours of the current node
+        """
+        
         bottom_layer = ['16', '17', '18', '19']
         found = False
         target_found = None
@@ -451,6 +481,16 @@ class Cube:
         return self._buildPath(path, target_found)
 
     def _buildPath(self, path, current):
+        """
+        Takes the dictionary from _bfs and builds the path taken from the initial square to the target. Simply adds current to the path list if it not None, then
+        updates current to be the value at path[current]
+
+        #VARIABLES:
+        p - the path taken from the initial square to its target
+        path - a dictionary representing the path from _bfs
+        current - the target node, where the trail to the path starts
+        """
+
         p = []
         while True:
             if path[current] != None:
@@ -461,19 +501,38 @@ class Cube:
         return p
 
     def _pathNotation(self, index, path, in_position):
-        bottom_layer = ['16', '17', '18', '19']
+        #TODO: clean up - remove in_position and commented out variables (bottom_layer and correntions)
+        """
+        Takes the path derived from _buildPath and changes it from the indices of the squares in _graph to their actual letter representation in the cube. Does so by
+        looping through path, getting the neighbours of the current node in question, taking the matching neighbour and determining which way it moves (clockwise or
+        anticlockwise)
+
+        #VARIABLES:
+        notation - translation from each index to its corresponding letter representation
+        p - p in letter format
+        current - the current node in the path
+        path - the path in indices format from the initial square to its target
+        index - the index in _graph of the initial square
+        """
+        
+        #bottom_layer = ['16', '17', '18', '19']
         notation = {'0':['U', 'B'], '1':['U', 'R'], '2':['U', 'F'], '3':['U', 'L'], '4':['L', 'U'], '5':['U', 'F'], '6':['L', 'D'], '7':['L', 'B'], '8':['F', 'U'], \
                     '9':['F', 'R'], '10':['F', 'F'], '11':['F', 'L'], '12':['R', 'U'], '13':['R', 'B'], '14':['R', 'D'], '15':['R', 'F'], '16':['D', 'F'], \
                     '17':['D', 'R'], '18':['D', 'B'], '19':['D', 'L'], '20':['B', 'D'], '21':['B', 'R'], '22':['B', 'U'], '23':['B', 'L']}
 
         p = []
         current = index
-        corrections = []
+        #corrections = []
         for i in path:
             neigh = self._graph.getNeighbours(current)
             for n in range(len(neigh)):
                 if neigh[n] == i:
                     t = notation[current][n/2]
+                    """
+                    This checks if the matching node is a clockwise or anticlockwise rotation from the current node. Becuase the rotations are represented like this:
+                    [clockwise_face, anticlockwise_face, clockwise_neighbour, anticlockwise_neighbour], the turn is clockwise if it's even and anticlockwise if it's
+                    odd
+                    """
                     if n%2 == 1:
                         t += "'"
                     p.append(t)
@@ -482,6 +541,22 @@ class Cube:
         return p
 
     def _returnCollision(self, bottom_layer, op, current, in_position):
+        """
+        Determines whether the movement of one cross piece interferes and moves a solved cross piece out of its correct position, taking note of the rotation that
+        caused the interference. It does this by taking all the side pieces of the affected squares during the rotation and checks if they are both in the bottom
+        layer and if they are correctly oriented cross pieces
+
+        #VARIABLES:
+        bottom_layer - the indices in _graph of the bottom layer
+        op - the index of the operation that rotated the cube
+        current - the index of the square that cause the rotation
+        in_position - list of the cross pieces correctly oriented
+        buddy_index - the index of the sticker that is on the same square as the current sticker being checked
+        cube_i - the index in _cube of the current square
+        buddy_i the index in _cube of the current square's buddy
+        bottom_colour - the colour of the current sticker
+        buddy_clr - the colour of the current sticker's buddy
+        """ 
         for i in range(4):
             buddy_index = self._graph.getBuddy(current)
             if current in bottom_layer or buddy_index in bottom_layer:
@@ -495,6 +570,17 @@ class Cube:
         return False
 
     def _findAnchor(self, cross_positions, coloured_positions):
+        """
+        Finds the cross square in the bottom layer that will be used as the reference point for the positioning of the other cross squares. Goes through the bottom
+        layer and returns index in cross_positions of the first cross square it finds
+
+        #VARIABLES:
+        cross_positions - the positions of the cross positions
+        coloured_positions - the positions of the corresponding coloured positions
+        bottom_layer - the coordinates of the bottom layer
+        anchor - the index in cross_positions of the anchor
+        """
+        
         bottom_layer = ['16', '17', '18', '19']
         anchor = None
         for c in range(len(cross_positions)):
@@ -504,6 +590,23 @@ class Cube:
                     return anchor
 
     def _getAnchorTargets(self, cross_positions, coloured_positions, anchor_index):
+        """
+        Returns the positions of the cross squares that are not the anchor in respect to this anchor. First it gets the correct position in the bottom layer of the
+        anchor. This position is the index in both _graph and _cube. Next it rotates the cube clockwise in respect to the bottom layer, taking note of the order of
+        the colours of the center squares of each of the buddies of the bottom layer squares. This order represents the positioning of the other cross squares relative
+        to the anchor. It then starts at the current position of the anchor square and rotates clockwise, adding the colour as the key and the index in both _graph
+        and _cube, along with the index in cross_positions of the corresponding cross square.
+
+        #VARIABLES:
+        cross_positions - the positions of teh cross positions
+        coloured_positions - the positions of the corresponding coloured stickers
+        anchor_index - the index of the anchor square in _graph
+        bottom_layer - the positions of the bottom layer squares
+        anchor_position - the index of the anchor in bottom_layer, as well as the index in _cube
+        colour_order - the actual order of the colours in repect to the anchor
+        order - the order in respect to the current position of the anchor in the bottom layer
+        """
+        
         bottom_layer = ['16', '17', '18', '19']
         anchor_position = None
         buddy = self._graph.getElements(self._graph.getBuddy(cross_positions[anchor_index][0]))[1]
@@ -536,6 +639,28 @@ class Cube:
         return order
 
     def _decideOnBestPath(self, anchor_targets, cross_positions, coloured_positions, anchor_index):
+        """
+        Determines which cross square is the closest to being in its solved space. Does so by first gettig the cross squares that should be excluded - the ones already
+        in position. It then loops through cross_positions, taking the ones that are not excluded and determining their path to their solved slot. It does this in two
+        steps. First it finds the path of the cross square to the closest square in the bottom layer, not taking into account its target position with respect to the
+        anchor square. Next it takes its target square and finds the path from this to where the just mentioned bottom layer square. It then finds the square with
+        the least number of moves to its solved state.
+
+        #VARIABLES:
+        anchor_targets - the positions of the cross squares in respect to the anchor square
+        cross_positions - the positions of the cross squares
+        coloured_positions - the positions of the corresponding stickers
+        anchor_index - the index of the anchor square in _graph
+        bottom_layer - the indices in _graph of the bottom layer
+        exclude - the cross squares that are already in the correct position and should be excluded from path determining
+        path_to_bottom - list containing the paths of each cross square not excluded from their closest bottom layer square
+        target_to_position - lsit containing the paths of the anchor position of each cross square to the target position from path_to_bottom
+        target - the index of the bottom layer position found by taking the final value of path
+        clr - the sticker colour of the current cross square's anchor position
+        least - the length of the shorstest path
+        index - the index in path_to_bottom and target_to_positions of the shortest path
+        """
+        
         bottom_layer = ['16', '17', '18', '19']
         exclude = self._findInPosition(anchor_targets, cross_positions, coloured_positions)
         exclude.append(coloured_positions[anchor_index][2])
@@ -558,6 +683,17 @@ class Cube:
         return (path_to_bottom[index][0], target_to_position[index][0], path_to_bottom[index][1], target_to_position[index][1])
 
     def _findBottomToTarget(self, start, target):
+        """
+        Determines the path from start (the position of the anchor_target of the current cross square in question) and the target of said cross_square. We can't use
+        _bfs here because of the way it is designed, in that it will move the start square out of the bottom layer at the beginning of the search, which here wouldn't
+        make sense. Instead it just starts at the start square and rotates the bottom layer until it finds teh correct position, return the path undertaken
+
+        #VARIABLES:
+        start - the position of the anchor_target of the current cross square
+        target - the target of the current cross square
+        path - the path taken from start to target
+        """
+        
         if start == target:
             return []
         path = []
@@ -574,6 +710,15 @@ class Cube:
         return path
 
     def _findInPosition(self, anchor_targets, cross_positions, coloured_positions):
+        """
+        Finds the cross squares that are correctly oriented in the bottom layer. Simply takes the the values in anchor_targets and cross_positions and compares them
+
+        VARIABLES:
+        anchor_targets - positions of the target positions relative to the anchor for each cross square
+        cross_positions - positions of each cross_position
+        coloured_positions - positions of each corresponding sticker
+        """
+        
         in_position = []
         for key in anchor_targets:
             i = anchor_targets[key][1]
@@ -582,6 +727,26 @@ class Cube:
         return in_position
 
     def _decidePath(self, both_paths, in_position):
+        """
+        Builds the path of the closest cross square based on both_paths. It builds the path by doing a check first, taking an action or not based on this check, moving
+        the bottom layer into the target position, and finally also moving the cross square itself into the target position. The check is to see whether the square
+        piece is in the bottom layer or not. If it is, then the first move will be to move the piece out of this position, so it executes the first move in square_path
+        and then deletes it so it doesn't get executed again
+
+        VARIABLES:
+        both_paths - contains the path for the cross square and the path for the anchor_target
+        in_positions - contains the cross squares that are in position (used for _pathNotation)
+        bottom_layer - the positions in _graph of the bottom layer
+        square_path - holds the path of the cross square
+        starting_point - the starting point of the cross square
+        bottom_start - the starting point of the anchor_target
+        bottom_path - the path of the anchor_target to the target
+        path_to_take - the actual path to be taken (a mixture of both paths) to be returned
+        path_indices - the list of the corresponding indices in _graph of the turns in path_to_take, used in _rotateReturnPosition to check if correctly oriented
+                       cross squares are moved out of position
+        starting_neighbour - the corresponding sticker to check if the square is in the bottom_layer
+        """
+        
         bottom_layer = ['16', '17', '18', '19']
         square_path = both_paths[0]
         starting_point = both_paths[2]
@@ -617,6 +782,10 @@ class Cube:
         
     #Start of F2L
     def SolveF2L(self):
+        """
+        Returns the path to take to solve the F2L stage of the solve
+        """
+        
         self._optimisedF2L()
         #for i in range(4):
         #    print("")
@@ -761,22 +930,39 @@ class Cube:
         self._calculatePair(pair)"""
 
     def _calculatePair(self, pair):
+        """
+        Calculates the value associated with an F2L pair and returns the algorithm for that pair
+        """
+        
         a = pair[5]**pair[0]
         b = pair[1][1]**pair[6]
         c = pair[7]**pair[2][1]
         d = pair[3][1]**pair[8]
         e = pair[9]**pair[4][1]
         val = a + b + c + d + e
-        #print(pair)
         alg = self._r.get(val)
         return alg
-        #print("")
-        #print(alg)
-        #a = alg.split(" ")
-        #for r in a:
-        #    self.RotateWithNotation(r)
 
     def OptimisedF2L(self):
+        """
+        Returns the series of F2L algorithms that has the shortest number of steps. It does so recursively. First it gets all of the F2L pairs for the current cube
+        configuration. It then goes through these pairs one by one and builds a tree which contains all possible F2L algorithms that occur after executing that
+        algorithm. This tree has the following structure: the root of the tree is the first algorithm to be executed, then it takes the next series of pairs and adds
+        them as its children, and then it does so recursively for each of the children and the children's children until there are no F2L pairs left. It then goes
+        through the leaves of the tree and builds upwards to the root to form the path of each of the possible solutions. Finally it takes the shortest of these paths
+        and returns it
+
+        VARIABLES:
+        all_pairs - the initial F2L pair coordinates that form the roots of each of the trees (one per pair)
+        roots - the root nodes of the trees
+        nodes - each node in every tree, to keep track of which ones are leaves
+        orig_cube - a snapshot of the cube's configuration so it can test out all the algorithms at that level
+        orig_graph - a snapshot of the graph's configuration
+        new_pairs - the F2L pair coordinates after the initial F2L pair's algorithm has been executed
+        least - the length of the shortest path
+        path - the shortest path
+        """
+        
         all_pairs = self._optimisedF2L()
         roots = []
         nodes = []
@@ -805,91 +991,32 @@ class Cube:
             for alg in p:
                 total += len(alg)
             if least == None or total < least:
+                least = total
                 path = p
         return path
-        """alg_list = []
-        pairs1 = self._optimisedF2L()
-        print("p1")
-        print(pairs1)
-        for i1 in range(len(pairs1)):
-            p1 = []
-            alg1 = self._calculatePair(pairs1[i1])
-            rev1 = []
-            p1 = p1 + [alg1]
-            #print(alg1)
-            a1 = alg1.split(" ")
-            for r1 in a1:
-                if len(r1) > 1 and r1[1] == "'" or (len(r1) == 1):
-                    rev1 = [self._inverts[r1]] + rev1
-                else:
-                    rev1 = [r1] + rev1
-                self.RotateWithNotation(r1)
-            pairs2 = self._optimisedF2L()
-            for i2 in range(len(pairs2)):
-                p2 = p1
-                alg2 = self._calculatePair(pairs2[i2])
-                rev2 = []
-                p2 = p2 + [alg2]
-                a2 = alg2.split(" ")
-                for r2 in a2:
-                    if len(r2) > 1 and r2[1] == "'" or (len(r2) == 1):
-                        rev2 = [self._inverts[r2]] + rev2
-                    else:
-                        rev2 = [r2] + rev2
-                    self.RotateWithNotation(r2)
-                pairs3 = self._optimisedF2L()
-                for i3 in range(len(pairs3)):
-                    p3 = p2
-                    alg3 = self._calculatePair(pairs3[i3])
-                    rev3 = []
-                    p3 = p3 + [alg3]
-                    a3 = alg3.split(" ")
-                    for r3 in a3:
-                        if len(r3) > 1 and r3[1] == "'" or (len(r3) == 1):
-                            rev3 = [self._inverts[r3]] + rev3
-                        else:
-                            rev3 = [r3] + rev3
-                        self.RotateWithNotation(r3)
-                    #alg_list = alg_list + [p3]
-                    pairs4 = self._optimisedF2L()
-                    print("p4")
-                    print(pairs4)
-                    for i4 in range(len(pairs4)):
-                        p4 = p3
-                        alg4 = self._calculatePair(pairs4[i4])
-                        rev4 = []
-                        p4 = p4 + [alg4]
-                        a4 = alg4.split(" ")
-                        for r4 in a4:
-                            if len(r4) > 1 and r4[1] == "'" or (len(r4) == 1):
-                                rev4 = [self._inverts[r4]] + rev4
-                            else:
-                                rev4 = [r4] + rev4
-                            self.RotateWithNotation(r4)
-                        alg_list = alg_list + [p4]
-                        for r4 in rev4:
-                            self.RotateWithNotation(r4)
-                    for r3 in rev3:
-                        self.RotateWithNotation(r3)
-                for r2 in rev2:
-                    self.RotateWithNotation(r2)
-            for r1 in rev1:
-                self.RotateWithNotation(r1)
-
-        least = 0
-        least_num = 0
-        print("HHH")
-        print(alg_list)
-        for i in range(len(alg_list)):
-            turns = 0
-            for j in range(len(alg_list[i])):
-                turns += len(alg_list[i][j].split(" "))
-            if turns < least_num or least_num == 0:
-                least = i
-                least_num = turns
-        return alg_list[least]"""
 
     def _optimisedF2L(self):
+        """
+        Returns all unsolved F2L pair coordinates. First goes through each corner position on the cube to test for a corner piece (one that has a cross colour on it),
+        taking note of the position of each of the stickers that are a part of that piece. It then finds the corresponding side piece for the corner, based on the non
+        cross colour stickers on the corner. It then adds the coordinates of all these pieces into the pair list before finding the coordinates of where this pair
+        is to be inserted. slot_deciders is used to determine where the pair is to be inserted. They are the coordinates of the stickers of the cross squares that
+        lie either side of the corner piece's correct slot. The list is looped through until a match is found and the coordinates are then add to the pair list. It
+        then checks whether the pair is already in its correct slot, where if it is not it is added to the all_pairs list, which is returned after all pairs are
+        checked.
+
+        VARIABLES:
+        slot_decides - the coordinates of the colours either side of each of the corner slots, used to determine where each pair needs to go
+        slot - the coordinates of the slots of each of the corners
+        corner_positions - the positions of all the corners on the cube, including the other two sticker's coordinates in a clockwise manor. They are in a clockwise
+                           manor so that the values for the pair are consistent
+        side_positions - the positions of all the possible side pieces on the cube (must exclude bottom layer pieces)
+        corner - list of the three coordinates of the current corner
+        side - list of the two coordinates of the current side
+        pair - list of the coordinates of the corner and side pair as well as the coordinates of the slot where they need to be inserted
+        all_pairs - the list of all unsolved F2L pairs to be returned
+        """
+        
         cross_colour = "O"
         slot_deciders = [(14, 23), (23, 32), (32, 46), (46, 14)]
         slots = [(36, 13, 24, 12, 25), (38, 22, 33, 21, 34), (40, 31, 47, 30, 48), (42, 45, 15, 52, 16)]
@@ -953,25 +1080,29 @@ class Cube:
                 pair[9] = s2
 
                 total = abs(pair[0] - pair[5]) + abs(pair[1][1] - pair[6]) + abs(pair[2][1] - pair[7]) + abs(pair[3][1] - pair[8]) + abs(pair[4][1] - pair[9])
-                
+
+                """
+                If total is 0 then the pair has already be inserted
+                """
                 if total != 0:
                     all_pairs.append(pair)
 
         return all_pairs
 
-    """def _executeAlg(self, pair, path, index):
-        alg = self._calculatePair(pair)
-        path.append([alg])
-        print(alg)
-        a = alg.split(" ")
-        #print("JJJ")
-        #print(alg)
-        for t in a:
-            self.RotateWithNotation(t)
-        new_pairs = self._optimisedF2L()
-        print(new_pairs)"""
-
     def _buildF2LTree(self, parent, pair_list, nodes):
+        """
+        Algorithm to build the tree of all possible algorithms that can occur after a certain initial F2L algorithm. Does so by looping through the F2L pairs in
+        pair_list, getting the corresponding algorithm, creates a new Node object with this algorithm and parent as the parent node, adds this node to the list of
+        children in the parent node, indicates the parent node is no longer a leaf if it has not already been done, takes a snapshot of the current cube and graph
+        configuration, executes the algorithm, gets the list of the remaining F2L pairs after this algorithm, and repeats with this new pair list if it is not empty
+
+        VARIABLES:
+        parent - the parent node of all pairs in pair_list
+        pair_list - the current list of all unsolved F2L lists of the current cube configuration
+        nodes - the list of nodes in each tree
+        new_pair_list - the list of F2L pairs after the algorithm is executed
+        """
+        
         for pair in pair_list:
             alg = self._calculatePair(pair)
             new_alg = Node(parent, alg)
@@ -991,6 +1122,16 @@ class Cube:
             self._graph = old_graph
 
     def _returnPath(self, leaf):
+        """
+        Returns the list of F2L algorithms based on the provided leaf node. It simply adds the algorithm associated with the current node, which starts with the
+        provided leaf, makes the current node the parent of the node until eventually the node is set to None, which is the parent of the root node
+
+        VARIABLES:
+        leaf - the leaf node that is the last algorithm of the particular F2L path
+        node - the current node to be added to the path
+        p - the path to be returned
+        """
+        
         node = leaf
         p = []
         while node:
@@ -999,9 +1140,36 @@ class Cube:
         return p
 
     def SolveOLL(self):
+        """
+        Returns the algorithm to solve the OLL stage
+        """
+        
         return self._solveOLL()
 
     def _solveOLL(self):
+        """
+        Works out the value associated with the cube configuration and returns the algorithm for that value. It runs through the squares on the top layer of the cube,
+        marking each square as a 0 or a 1 depending on whether the square is not the correct colour or it is, respectively. The correct colour is the opposite of that
+        of the cross colour. This sequence of 0sand 1s is treated as a binary sequence and converted into an int. Before this conversion, the number of 1s is counted.
+        If that number is 9, then the OLL stage is already solved and there is no need to continue. The corresponding stickers of each of the top layer squares are
+        then taken into consideration and the same thing is done with them. These two integers are then multiplied together, obtaining the value for the algorithm,
+        which is used to return the corresponding algorithm. Each top layer pattern maps to an algorithm, butonly in one orientation, so if no algorithm is returned
+        for a given pattern, the top layer is rotated and the process is repeated until an algorithm is found, adding the number of rotations to the start of the
+        algorithm
+
+        VARIABLES:
+        tops_squares - the indices in _cube of the top layer in the order they are to be checked
+        side_squares - the indices in _cube of the side stickers of the top layer in the order they are to be checked
+        match_colour - the colour of the top layer
+        turns - the list of turns until the correct pattern is found
+        top_bits - the bits associated with the top layer
+        side_bits - the bits associated with the side stickers of the top layer
+        num_top_bits - the number of bits that are 1 in top_bits
+        top_val - the integer value of the top_bits sequence
+        side_val - the integer value of the side_bits sequence
+        act - the actual algorithm to be returned, including the turns that occurred to find th ecorrect pattern
+        """
+        
         cross_colour = "O"
         top_squares = [0, 1, 2, 7, 8, 3, 6, 5, 4]
         side_squares = [51, 50, 49, 29, 28, 27, 20, 19, 18, 11, 10, 9]
@@ -1011,7 +1179,6 @@ class Cube:
 
         while True:
             top_bits = []
-        #steps += len(alg)
             side_bits = []
             num_top_bits = 0
 
@@ -1031,8 +1198,6 @@ class Cube:
                 else:
                     side_bits.append(0)
             
-            #print(top_bits)
-            #print(side_bits)
             top_val = self._bToI(top_bits)
             side_val = self._bToI(side_bits)
             alg_value = top_val * side_val
@@ -1042,57 +1207,69 @@ class Cube:
             else:
                 turns.append("U")
                 self.RotateWithNotation("U")
-            #print(top_bits)
-            #print(side_bits)
-        #print("")
-        #print("OLL:")
         act = []
         if len(turns) > 0:
-            #print("")
-            #print("ALLIGNMENT:")
             if len(turns) == 3:
                 t = turns[0] + "'"
-                #print(turns[0] + "'")
             elif len(turns) == 2:
                 t = turns[0] + "2"
-                #print(turns[0] + "2")
             else:
                 t = turns[0]
-                #print(turns[0])
             act.append(t)
 
-        #print("")
-        #print("OLL:")
-        #print(alg)
         a = alg.split(" ")
         for i in a:
-        #    print(i)
             self.RotateWithNotation(i)
             act.append(i)
-            #print(alg_value)
         return act
 
     def _bToI(self, bits):
+        """
+        Function that returns the integer value associated with the bit sequence
+
+        VARIABLES:
+        bits - the list of 0s and 1s to be converted
+        total - the integer value to be returned
+        """
+        
         total = 0
         for bit in range(len(bits)):
             total += bits[bit] * (2**bit)
         return total
 
     def SolvePLL(self):
+        """
+        Returns the steps involved in solving the PLL stage
+        """
+        
         return self._solvePLL()
 
     def _solvePLL(self):
-        #pll_skip = False
+        """
+        Works out the value of the pattern on the side stickers of the top layer and returns the algorithm associated with this value. First it checks if the PLL stage
+        is already solved, if so there is no need to continue. If not then the side stickers of the top layer are checked. When a new colour is seen, it is added to
+        a dictionary where the colour is the key and the value is the number in the sequence of new colours that have been seen. This number is then added into the
+        correct list, by taking the index of the value in side_positions and dividing by 3, as the side stickers are in groups of 3. These values are then used in
+        an equation to determine the unique value that represents the pattern. This pattern is then used to return the corresponding algorithm, again if no algorithm
+        is returned, the top layer is rotated until a recognizable pattern is found
+
+        VARIABLES:
+        turns - the rotations undertaken to find a recognizable patter is found
+        side_positions - the indices in _cube of the side stickers of the top layer
+        l - the number associated with each sticker in each of the four groups
+        cols - the colours and their associated sequence number in the pattern
+        val - the unique value associated with the pattern
+        act - the actual algorithm that gets returned
+        """
+        
         if (self._cube[51].colour == self._cube[50].colour and self._cube[50].colour == self._cube[49].colour) and \
             (self._cube[29].colour == self._cube[28].colour and self._cube[28].colour == self._cube[27].colour):
             return [self._alignAfterPLL()]
-            #pll_skip = True
         alg = None
         turns = []
-        #col_to_num = {self._cube[17].colour:1, self._cube[26].colour:2, self._cube[35].colour:3, self._cube[53].colour:4}
         side_positions = [51, 50, 49, 29, 28, 27, 20, 19, 18, 11, 10, 9]
 
-        while alg == None:# and not pll_skip:
+        while alg == None:
             l = [[], [], [], []]
             cols = {}
             for i in range(len(side_positions)):
@@ -1100,10 +1277,6 @@ class Cube:
                 if colour not in cols.keys():
                     cols[colour] = len(cols)+1
                 l[i/3].append(cols[colour])
-                #col = self._cube[side_positions[i][j]].colour
-                #l[i].append(col_to_num[col])
-
-
 
             a = l[0][0] * (l[0][1] + l[0][2])
             b = l[1][0] + (l[1][1] * l[1][2])
@@ -1112,81 +1285,54 @@ class Cube:
 
             val = a**c + b**d
             alg = self._pll_r.get(str(val))
-            #print(val)
-            #print(alg)
-            
-            #print(l)
+
             if alg == None:
                 turns.append("U")
                 self.RotateWithNotation("U")
-            #if len(turns) == 4:
-            #    return
-        
-        #if not pll_skip:
-            #print("")
-            #print("PLL:")
+
         act = []
         if len(turns) > 0:
-                #print("")
-                #print("ALLIGNMENT:")
             if len(turns) == 3:
                 t = turns[0]+"'"
-                    #print(turns[0] + "'")
             elif len(turns) == 2:
                 t = turns[0]+"2"
-                    #print(turns[0] + "2")
             else:
                 t = turns[0]
-                    #print(turns[0])
             act.append(t)
 
-            #print("")
-            #print("PLL:")
         a = alg.split(" ")
-            #print(a)
-            #print(a)
         for i in a:
             self.RotateWithNotation(i)
-                #print(i)
             act.append(i)
-            #print(act)
         act.append(self._alignAfterPLL())
         return act
-            #nice_act = "" + act[0]
-            #for i in range(1, len(act)):
-            #    nice_act += " " + act[i]
-            #print(nice_act)
-        #else:
-        #    print("here")
-        #    align = self._alignAfterPLL()
-        #    print(align)
-        #    return align
 
     def _alignAfterPLL(self):
+        """
+        Aligns the top layer of the cube after the PLL stage, solving the cube. Simply rotates the top layer until the cube is aligned
+
+        VARIABLES:
+        turns - the rotations undertaken
+        t - the turns to be returned
+        """
+        
         turns = []
         while self._cube[51].colour != self._cube[52].colour:
             self.RotateWithNotation("U")
             turns.append("U")
-        #print(turns)
 
         t = ""
         if len(turns) > 0:
-            #print("")
-            #print("ALLIGNMENT:")
             if len(turns) == 3:
                 t = turns[0]+"'"
-                #print(turns[0] + "'")
             elif len(turns) == 2:
                 t = turns[0]+"2"
-                #print(turns[0] + "2")
             else:
                 t = turns[0]
-                #print(turns[0])
-        #print("JJ")
-        #print(t)
+
         return t
 
-    def _returnCornerBuddies(self, state, position):
+    """def _returnCornerBuddies(self, state, position):
         buddies = []
         buddy_position = 0
         if position == 0:
@@ -1197,15 +1343,20 @@ class Cube:
         else:
             state = self._graph._elements[str(state)][1][0]
         buddies.append(self._cube[self._graph._elements[self._graph.getBuddy(state)][0][position]].colour)
-        return (buddies[0], buddies[1])
+        return (buddies[0], buddies[1])"""
 
-    def _findCenter(self, colour):
+    """def _findCenter(self, colour):
         for index in range(12):
             index = str(index)
             if self._cube[self._middle.getElements(index)[1]].colour == colour:
-                return self._middle.getElements(index)[1]
+                return self._middle.getElements(index)[1]"""
 
     def _translateToNotation(self, state, op):
+        """
+        Returns the letter representation of the operation given the index in _cube of the piece being moved. Gets the center peice of the face on which the piece
+        is and returns the associated value of the layer it is on.
+        """
+        
         t = ""
         if op < 2:
             key = self._cube[((int(state)/4) * 9) + 8].colour
@@ -1238,26 +1389,7 @@ class Cube:
                 else:
                     new_solution.append(solution[i])
                     break
-
-        """for move in solution:
-            #i = random.randint(0, 11)
-            #m = moves[i]
-
-            if len(new_solution) == 0:
-                new_solution.append(move)
-            else:
-                if new_solution[len(new_solution)-1] == self._inverts[move]:# or new_solution[len(new_solution)-1] == (move[:1]+"2"):
-                    continue
-
-                if new_solution[len(new_solution)-1] == (move+"2"):
-                    new_solution[len(new_solution)-1] = new_solution[len(new_solution)-1][:1]+"'"
-
-                elif new_solution[len(new_solution)-1] == move:
-                    new_solution[len(new_solution)-1] = new_solution[len(new_solution)-1][:1]+"2"
-                else:
-                    new_solution.append(move)"""
-        #print(solution)
-        #print(new_solution)
+                
         return new_solution
 
     def __getstate__(self):
@@ -1351,7 +1483,8 @@ class Node:
         return self._leaf
 
     def switchLeaf(self):
-        self._leaf = not self._leaf
+        if self._leaf:
+            self._leaf = not self._leaf
 
     def __str__(self):
         strDesc = ""
@@ -1374,7 +1507,7 @@ class Node:
     alg = property(getAlg, setAlg)
     leaf = property(getLeaf)
 
-def listPosition(face, face_position):
+"""def listPosition(face, face_position):
     return (9 * face) + face_position
 
 def faceNumber(list_position):
@@ -1401,7 +1534,7 @@ def increaseIndexByOne(index, direction):
     if t < 0 or t > 7:
         return index + (7 * (direction * -1))
     else:
-        return t
+        return t"""
 
 def listToStr(l):
     s = "" + l[0]
