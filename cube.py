@@ -1363,6 +1363,26 @@ class Cube:
                 
         return new_solution
 
+    def _translateToMechanismInstructions(self, turns):
+        letter_to_arm = {"R":("arm3", 3), "L":("arm1", 1), "U":("arm0", 0), "D":("arm4", 4), "F":("arm2", 2), "B":("arm5", 5)}
+        arm_rotations = []
+        for item in turns:
+            d = 0
+            direction = "clockwise"
+            arm = letter_to_arm[item]
+            if len(item) > 1 and item[1] == "'":
+                direction = "anticlockwise"
+                d = 1
+
+            arm_rotations.append((arm[1], d))
+            print("Rotating " + arm[0] + direction + "...")
+            
+            if len(item) > 1 and item[1] == "2":
+                arm_rotations.append((arm[1], d))
+                print("Rotating " + arm[0] + direction + "...")
+
+        return arm_rotations
+
     def _ollStats(self):
         return self._solveOLL(stats=True)
 
