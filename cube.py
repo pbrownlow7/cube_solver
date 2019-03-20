@@ -1507,7 +1507,7 @@ class Node:
     alg = property(getAlg, setAlg)
     leaf = property(getLeaf)
 
-"""def listPosition(face, face_position):
+def listPosition(face, face_position):
     return (9 * face) + face_position
 
 def faceNumber(list_position):
@@ -1534,7 +1534,7 @@ def increaseIndexByOne(index, direction):
     if t < 0 or t > 7:
         return index + (7 * (direction * -1))
     else:
-        return t"""
+        return t
 
 def listToStr(l):
     s = "" + l[0]
