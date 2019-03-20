@@ -282,6 +282,8 @@ class Cube:
         while not cross_solved:
             anchor_targets = self._getAnchorTargets(cross_positions, coloured_positions, anchor_index)
             both_paths = self._decideOnBestPath(anchor_targets, cross_positions, coloured_positions, anchor_index)
+            if not both_paths:
+                break
             in_position = self._findInPosition(anchor_targets, cross_positions, coloured_positions)
             in_position.append(coloured_positions[anchor_index][2])
             correct_path = self._decidePath(both_paths, in_position)
@@ -664,6 +666,8 @@ class Cube:
         bottom_layer = ['16', '17', '18', '19']
         exclude = self._findInPosition(anchor_targets, cross_positions, coloured_positions)
         exclude.append(coloured_positions[anchor_index][2])
+        if len(exclude) == 4:
+            return None
         path_to_bottom = []
         target_to_position = []
         for i in range(len(cross_positions)):
@@ -822,7 +826,7 @@ class Cube:
         path - the shortest path
         """
         
-        all_pairs = self._getF2LPairs()#self._optimisedF2L()
+        all_pairs = self._getF2LPairs()
         roots = []
         nodes = []
         for pair in all_pairs:
@@ -830,10 +834,11 @@ class Cube:
             orig_graph = copy.deepcopy(self._graph)
             alg = self._calculatePair(pair)
             root = Node(None, alg)
+            nodes.append(root)
             a = alg.split(" ")
             for t in a:
                 self.RotateWithNotation(t)
-            new_pairs = self._getF2LPairs()#self._optimisedF2L()
+            new_pairs = self._getF2LPairs()
             self._buildF2LTree(root, new_pairs, nodes)
             roots.append(root)
             self._cube = orig_cube
@@ -854,7 +859,7 @@ class Cube:
                 path = p
         return path
 
-    def _getF2LPairs(self):#def _optimisedF2L(self):
+    def _getF2LPairs(self):
         """
         Returns all unsolved F2L pair coordinates. First goes through each corner position on the cube to test for a corner piece (one that has a cross colour on it),
         taking note of the position of each of the stickers that are a part of that piece. It then finds the corresponding side piece for the corner, based on the non
@@ -1443,15 +1448,17 @@ def SolveCube():
     print("SOLVE:")
 
     cross = c.SolveCross()
-    nc = listToStr(cross)
+    if len(cross) > 0:
+        nc = listToStr(cross)
     steps += len(cross)
 
     f2l = c.SolveF2L()
-    for alg in f2l:
-        a = alg.split(" ")
-        for r in a:
-            c.RotateWithNotation(r)
-            steps += 1
+    if f2l:
+        for alg in f2l:
+            a = alg.split(" ")
+            for r in a:
+                c.RotateWithNotation(r)
+                steps += 1
 
     oll = c.SolveOLL()
     steps += len(oll)
@@ -1467,9 +1474,11 @@ def SolveCube():
 
     total = fin - start
 
-    print(nc)
-    for alg in f2l:
-        print(alg)
+    if len(cross) > 0:
+        print(nc)
+    if f2l:
+        for alg in f2l:
+            print(alg)
     if len(oll) > 0:
         print(no)
     if len(pll) > 0:
@@ -1479,7 +1488,8 @@ def SolveCube():
     print("Steps taken: " + str(steps))
 
 def main():
-    SolveCube()
+    #SolveCube()
+    SolveMultipleCubes()
 
 def SolveMultipleCubes():
     total = 0
@@ -1499,10 +1509,11 @@ def SolveMultipleCubes():
 
 
         cross = c.SolveCross()
-        nc = listToStr(cross)
+        if len(cross) > 0:
+            nc = listToStr(cross)
 
-        opt_f2l = c.OptimisedF2L()
-        for alg in opt_f2l:
+        f2l = c.SolveF2L()
+        for alg in f2l:
             a = alg.split(" ")
             for r in a:
                 c.RotateWithNotation(r)
@@ -1519,8 +1530,9 @@ def SolveMultipleCubes():
 
         total += fin - start
 
-        print(nc)
-        for alg in opt_f2l:
+        if len(cross) > 0:
+            print(nc)
+        for alg in f2l:
             print(alg)
         if len(oll) > 0:
             print(no)
