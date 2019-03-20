@@ -1,7 +1,7 @@
 import math
 import time
 import random
-import redis
+#import redis
 import copy
 
 class Graph():
@@ -85,9 +85,9 @@ class Cube:
         self._not_effected = {"R":"L", "L":"R", "U":"D", "D":"U", "F":"B", "B":"F"}
         self._cube = self._createCube()
         self._readable_solution = []
-        self._r = redis.Redis(host='localhost', port=6379, db=0)
-        self._oll_r = redis.Redis(host='localhost', port=6379, db=1)
-        self._pll_r = redis.Redis(host='localhost', port=6379, db=2)
+        #self._r = redis.Redis(host='localhost', port=6379, db=0)
+        #self._oll_r = redis.Redis(host='localhost', port=6379, db=1)
+        #self._pll_r = redis.Redis(host='localhost', port=6379, db=2)
 
         self._wide_rotations = {"u":('0', 0, '5', 0), "u'":('0', 1, '5', 1), "d":('16', 0, '5', 1), "d'":('16', 1, '5', 0),
                                "l":('3', 2, '0', 0), "l'":('3', 3, '0', 1), "r":('1', 2, '0', 1), "r'":('1', 3, '0', 0),
@@ -783,27 +783,34 @@ class Cube:
     #Start of F2L
     def SolveF2L(self):
         """
-        Returns the path to take to solve the F2L stage of the solve
+        Returns the path to take to solve the F2L stage of the solve in the fewest number of turns based on the cross solve
         """
         
         self._optimisedF2L()
-        #for i in range(4):
-        #    print("")
-        #    print("F2L PAIR " + str(i+1) + ":")
-        #    self._searchForF2L()
+
+    def NonOptF2L(self):
+        """
+        Returns the path to take to solve the F2L stage in the quickest time, not taking into account the number of turns
+        """
+
+        algs = []
+        pair = self._optimisedF2L()[0]
+            
+        while pair != []:
+            alg = self._calculatePair(pair)
+            algs.append(alg)
+            a = alg.split(" ")
+            for t in a:
+                self.RotateWithNotation(t)
+            pair = self._optimisedF2L()
+            
+        return algs
 
     """def _searchForF2L(self):
+        algs = []
         cross_colour = "O"
         slot_deciders = [(14, 23), (23, 32), (32, 46), (46, 14)]
         slots = [(36, 13, 24, 12, 25), (38, 22, 33, 21, 34), (40, 31, 47, 30, 48), (42, 45, 15, 52, 16)]
-        corner_positions = {0:[51, 9], 2:[49, 39], 6:[11, 18], 4:[20, 27], \
-                            9:[0, 51], 11:[6, 18], 15:[42, 45], 13:[24, 36], \
-                            18:[6, 11], 20:[4, 27], 24:[13, 36], 22:[33, 38], 27:[4, 20],\
-                            29:[2, 49], 33:[22, 38], 31:[40, 47], 36:[24, 13], 38:[22, 33],\
-                            42:[15, 45], 40:[31, 47], 45:[15, 42], 47:[40, 31], 51:[0, 9], 49:[2, 29]}
-        side_positions = {1:50, 3:28, 5:19, 7:10, 10:7, 12:25, 16:52, 19:5, 21:34, \
-                          25:12, 28:3, 30:48, 34:21, 50:1, 52:16, 48:30}
-
         corner_positions = {0:[9, 51], 9:[51, 0], 51:[0, 9], 2:[49, 29], 49:[29, 2], 29:[2, 49], \
                             4:[27, 20], 27:[20, 4], 20:[4, 27], 6:[18, 11], 18:[11, 6], 11:[6, 18], \
                             13:[24, 36], 24:[36, 13], 36:[13, 24], 45:[15, 42], 15:[42, 45], 42:[45, 15], \
@@ -811,123 +818,68 @@ class Cube:
 
         side_positions = {1:50, 3:28, 5:19, 7:10, 10:7, 12:25, 16:52, 19:5, 21:34, \
                           25:12, 28:3, 30:48, 34:21, 50:1, 52:16, 48:30}
-
-        #f2l_pairs = [None, None, None, None]
         
-        found = 0
         corner = [0, 0, 0]
         side= [0, 0]
         pair = []
-        #corners = [[None, None, None], [None, None, None], [None, None, None], \
-        #           [None, None, None]]
+        found = 0
 
-        #sides = [[None, None], [None, None], [None, None], [None, None]]
-        
-        for k in corner_positions.keys():
-            if self._cube[k].colour == cross_colour:
-                corner[0] = k
-                corner[1] = (self._cube[corner_positions[k][0]].colour, corner_positions[k][0])
-                corner[2] = (self._cube[corner_positions[k][1]].colour, corner_positions[k][1])
+        while found < 4:
+            for k in corner_positions.keys():
+                if self._cube[k].colour == cross_colour:
+                    corner[0] = k
+                    corner[1] = (self._cube[corner_positions[k][0]].colour, corner_positions[k][0])
+                    corner[2] = (self._cube[corner_positions[k][1]].colour, corner_positions[k][1])
 
-                corners[found][0] = k
-                c1_position = corner_positions[k][0]
-                c1_colour = self._cube[c1_position].colour
-                corners[found][1] = (c1_colour, c1_position)
+                    for sk in side_positions.keys():
+                        s2_position = side_positions[sk]
+                        s2_colour = self._cube[s2_position].colour
+                        
+                        if self._cube[sk].colour == corner[1][0] and s2_colour == corner[2][0]:
+                            s1_position = sk
+                            s1_colour = self._cube[sk].colour
+                            side[0] = (s1_colour, s1_position)
+                            side[1] = (s2_colour, s2_position)
 
-                c2_position = corner_positions[k][1]
-                c2_colour = self._cube[c2_position].colour
-                corners[found][2] = (c2_colour, c2_position)
+                            break
 
-                for sk in side_positions.keys():
-                    s2_position = side_positions[sk]
-                    s2_colour = self._cube[s2_position].colour
+                    pair = [corner[0], corner[1], corner[2], side[0], side[1], 0, 0, 0, 0, 0]
+
+                    s = 0
+                    c1 = None
+                    c2 = None
+                    s1 = None
+                    s2 = None
+                    while s < len(slot_deciders):
+                        if pair[1][0] == self._cube[slot_deciders[s][0]].colour and pair[2][0] == self._cube[slot_deciders[s][1]].colour:
+                            c1 = slots[s][1]
+                            c2 = slots[s][2]
+                            s1 = slots[s][3]
+                            s2 = slots[s][4]
+                            break
+                        elif pair[1][0] == self._cube[slot_deciders[s][1]].colour and pair[2][0] == self._cube[slot_deciders[s][0]].colour:
+                            c1 = slots[s][2]
+                            c2 = slots[s][1]
+                            s1 = slots[s][4]
+                            s2 = slots[s][3]
+                            break
+                        s += 1
+
+                    pair[5] = slots[s][0]
+                    pair[6] = c1
+                    pair[7] = c2
+                    pair[8] = s1
+                    pair[9] = s2
+
+                    total = abs(pair[0] - pair[5]) + abs(pair[1][1] - pair[6]) + abs(pair[2][1] - pair[7]) + abs(pair[3][1] - pair[8]) + abs(pair[4][1] - pair[9])
+
                     
-                    if self._cube[sk].colour == corner[1][0] and s2_colour == corner[2][0]:
-                        s1_position = sk
-                        s1_colour = self._cube[sk].colour
-                        side[0] = (s1_colour, s1_position)
-                        side[1] = (s2_colour, s2_position)
-
-                        break
-
-                pair = [corner[0], corner[1], corner[2], side[0], side[1], 0, 0, 0, 0, 0]
-
-                for sk in side_positions.keys():
-                    s2_position = side_positions[sk]
-                    s2_colour = self._cube[s2_position].colour
+                    If total is 0 then the pair has already be inserted
                     
-                    if self._cube[sk].colour == c1_colour and s2_colour == c2_colour:
-                        s1_position = sk
-                        s1_colour = self._cube[sk].colour
-                        sides[found][0] = (s1_colour, s1_position)
-
-                        sides[found][1] = (s2_colour, s2_position)
-                        break
-                
-
-                s = 0
-                c1 = None
-                c2 = None
-                s1 = None
-                s2 = None
-                while s < len(slot_deciders):
-                    if pair[1][0] == self._cube[slot_deciders[s][0]].colour and pair[2][0] == self._cube[slot_deciders[s][1]].colour:
-                        c1 = slots[s][1]
-                        c2 = slots[s][2]
-                        s1 = slots[s][3]
-                        s2 = slots[s][4]
-                        break
-                    elif pair[1][0] == self._cube[slot_deciders[s][1]].colour and pair[2][0] == self._cube[slot_deciders[s][0]].colour:
-                        c1 = slots[s][2]
-                        c2 = slots[s][1]
-                        s1 = slots[s][4]
-                        s2 = slots[s][3]
-                        break
-                    s += 1
-
-                pair[5] = slots[s][0]
-                pair[6] = c1
-                pair[7] = c2
-                pair[8] = s1
-                pair[9] = s2
-                
-                #print(pair)
-                total = abs(pair[0] - pair[5]) + abs(pair[1][1] - pair[6]) + abs(pair[2][1] - pair[7]) + abs(pair[3][1] - pair[8]) + abs(pair[4][1] - pair[9])
-                
-                if total == 0:
-                    #found += 1
-                    continue
-                else:
-                    self._calculatePair(pair)
-                    break
-
-                #if found == 4:
-                #    break
-
-        s = 0
-        c1 = None
-        c2 = None
-        s1 = None
-        s2 = None
-        while s < len(slot_deciders):
-            if f2l_pairs[0][0][1][0] == self._cube[slot_deciders[s][0]].colour and f2l_pairs[0][0][2][0] == self._cube[slot_deciders[s][1]].colour:
-                c1 = slots[s][1]
-                c2 = slots[s][2]
-                s1 = slots[s][3]
-                s2 = slots[s][4]
-                break
-            elif f2l_pairs[0][0][1][0] == self._cube[slot_deciders[s][1]].colour and f2l_pairs[0][0][2][0] == self._cube[slot_deciders[s][0]].colour:
-                c1 = slots[s][2]
-                c2 = slots[s][1]
-                s1 = slots[s][4]
-                s2 = slots[s][3]
-                break
-            s += 1
-        print(f2l_pairs[0])
-        print(c1, c2, s1, s2)
-
-        pair = [f2l_pairs[0][0][0], f2l_pairs[0][0][1][1], f2l_pairs[0][0][2][1], f2l_pairs[0][1][0][1], f2l_pairs[0][1][1][1], slots[s][0], c1, c2, s1, s2]
-        self._calculatePair(pair)"""
+                    if total != 0:
+                        alg = self._calculatePair(pair)
+                        algs.append
+                        return alg"""
 
     def _calculatePair(self, pair):
         """
@@ -1146,7 +1098,7 @@ class Cube:
         
         return self._solveOLL()
 
-    def _solveOLL(self):
+    def _solveOLL(self, stats=False):
         """
         Works out the value associated with the cube configuration and returns the algorithm for that value. It runs through the squares on the top layer of the cube,
         marking each square as a 0 or a 1 depending on whether the square is not the correct colour or it is, respectively. The correct colour is the opposite of that
@@ -1203,6 +1155,16 @@ class Cube:
             alg_value = top_val * side_val
             alg = self._oll_r.get(str(alg_value))
             if alg != None:
+                if stats:
+                    f = open("oll_stats.txt", "a")
+                    top = ""
+                    side = ""
+                    for i in top_bits:
+                        top += str(i)
+                    for i in side_bits:
+                        side += str(i)
+                    f.write(top + "-" + side + "\n")
+                    f.close()
                 break
             else:
                 turns.append("U")
@@ -1244,7 +1206,7 @@ class Cube:
         
         return self._solvePLL()
 
-    def _solvePLL(self):
+    def _solvePLL(self, stats=False):
         """
         Works out the value of the pattern on the side stickers of the top layer and returns the algorithm associated with this value. First it checks if the PLL stage
         is already solved, if so there is no need to continue. If not then the side stickers of the top layer are checked. When a new colour is seen, it is added to
@@ -1289,6 +1251,15 @@ class Cube:
             if alg == None:
                 turns.append("U")
                 self.RotateWithNotation("U")
+
+        if stats:
+            f = open("pll_stats.txt", "a")
+            side = ""
+            for lis in l:
+                for item in lis:
+                    side += item
+            f.write(side + "\n")
+            f.close()
 
         act = []
         if len(turns) > 0:
@@ -1392,11 +1363,43 @@ class Cube:
                 
         return new_solution
 
+    def _translateToMechanismInstructions(self, turns):
+        letter_to_arm = {"R":("arm3", 3), "L":("arm1", 1), "U":("arm0", 0), "D":("arm4", 4), "F":("arm2", 2), "B":("arm5", 5)}
+        arm_rotations = []
+        for item in turns:
+            d = 0
+            direction = "clockwise"
+            arm = letter_to_arm[item]
+            if len(item) > 1 and item[1] == "'":
+                direction = "anticlockwise"
+                d = 1
+
+            arm_rotations.append((arm[1], d))
+            print("Rotating " + arm[0] + direction + "...")
+            
+            if len(item) > 1 and item[1] == "2":
+                arm_rotations.append((arm[1], d))
+                print("Rotating " + arm[0] + direction + "...")
+
+        return arm_rotations
+
+    def _ollStats(self):
+        return self._solveOLL(stats=True)
+
+    def _pllStats(self):
+        return self._solvePLL(stats=True)
+
     def __getstate__(self):
         return self.__dict__
     
     def __setstate__(seld, d):
         self.__dict__.update(d)
+
+    def _checkEquality(self, l1, l2):
+        for i in range(len(l1)):
+            if l1[i].colour != l2[i].colour:
+                return False
+        return True
             
     def __str__(self):
         return self._representCube()
@@ -1542,7 +1545,37 @@ def listToStr(l):
         s += " " + l[i]
     return s
 
+def buildOLLPLLStats():
+    c = Cube()
+    scramble = CreateScramble()
+    
+    for r in scramble:
+        c.RotateWithNotation(r)
+
+    cross = c.SolveCross()
+
+    oll = c._ollStats()
+
+    pll = c._pllStats()
+
 def main():
+
+    print("Hello")
+
+    """c = Cube()
+    scramble = ["B", "U", "R", "L"]
+    #scramble = CreateScramble()
+    ns = listToStr(scramble)
+    print("SCRAMBLE:")
+    print(ns)
+
+    for r in scramble:
+        c.RotateWithNotation(r)
+
+    start = time.time()
+    c.ExhaustiveSearch()
+    fin = time.time()
+    print("Time taken: " + str(fin-start))"""
 
     """root = Node(None, "1")
     one = Node(root, "2")
@@ -1553,7 +1586,7 @@ def main():
     root.addChild(three)
     print(root)"""
 
-    steps = 0
+    """steps = 0
     start = time.time()
     c = Cube()
     scramble = CreateScramble()
@@ -1606,7 +1639,7 @@ def main():
         print(np)
     print("")
     print("Time taken: " + str(total))
-    print("Steps taken: " + str(steps))
+    print("Steps taken: " + str(steps))"""
 
     """total = 0
     steps = 0
@@ -1665,10 +1698,8 @@ def main():
             print(np)
         print("")
     print("Time taken: " + str(total))"""
-    #print("Total turns: " + str(steps))
-    #print("Average time take: " + str(total/100))
 
-def DetermineCorrectness(c):
+"""def DetermineCorrectness(c):
     state = "16"
     for _ in range(4):
         buddy = c._graph.getBuddy(state)
@@ -1820,12 +1851,12 @@ def TestFullSexyRotation(c):
         c.RotateWithNotation("R'")
         c.RotateWithNotation("U'")
         #print(c)
-    """for _ in range(6):
+    for _ in range(6):
         c.Rotate('1', 2)
         c.Rotate('0', 0)
         c.Rotate('1', 3)
         c.Rotate('0', 1)
-        #print(c)"""
+        #print(c)
 
 def TestScramble():
     c = Cube()
@@ -1856,82 +1887,44 @@ def EnterScramble():
         c.RotateWithNotation(i)
     c._readable_solution = []
     #print(c)
-    return c#
+    return c#"""
 
 def CreateScramble():
     c = Cube()
     s = []
     moves = ["U", "D", "L", "R", "F", "B", "U'", "D'", "L'", "R'", "F'", "B'"]
     counter = 0
-    #inc = lambda n : (n+3) % 12
     while counter < 30:
         i = random.randint(0, 11)
-        #m = moves[i]
-        #print(s)
         if len(s) == 0:
             s.append(moves[i])
             counter += 1
         else:
             j = len(s)-1
             doub = 0
-            #mix = 0
             while j >= 0:
-                #print(moves[i], c._inverts[s[j]], s[j])
                 if s[j] == moves[i]:
                     doub += 1
                     j -= 1
                     if doub == 2:
                         break
                 else:
-                #print(doub)
-
-                #if (s[j] == i and s[j-1] == i) or (s[j] == c._inverts[moves[i]]) or ():
-                #    break
-                #if doub > 1 or moves[i] == c._inverts[s[j]]:
                     if moves[i] == c._inverts[s[j]]:
                         break
-                #elif doub == 1 or s[j] == c._not_effected[s[j][0]]:
                     elif s[j][0] == c._not_effected[moves[i][0]]:
                         j -= 1
                     else:
-                    #print(s)
-                    #print("Adding '" + moves[i] + "'")
                         s.append(moves[i])
                         counter += 1
                         break
 
-    #print("Scramble:")
-    #print(s)
-
-    #s = ["D", "L", "R'", "B", "B", "U'", "F'", "L'", "U'", "B'", "U'", "B", "L'", "D", "U'", "D", "R", "B", "L", "D"]
-    #s = ["B'", "F'", "L'", "U", "B", "U", "D", "R'", "D", "U", "L", "D'", "R", "L", "D", "U'", "L'", "U'", "L'", "B"]
-
     s = c._cleanUpSolution(s)
-#
-    #for x in s:
-    #    c.RotateWithNotation(x)
+
     c._readable_solution = []
 
-    #s = c._cleanUpSolution(s)
-    #nice_s = "" + s[0]
-    #for i in range(1, len(s)):
-    #    nice_s += " " + s[i]
-    #print("Scramble:")
-    #print(nice_s)
-
-    #return c
     return s
-    #return ["R'", "B'", "R", "L'", "U'", "L'", "B", "R", "B", "F'", "R'", "U2", "B", "L", "R", "B", "U2", "B'", "D", "U'", "B'", "U'", "F2", "B'", "R", "L'", "U'"]
-    #return ["R'", "D", "L'", "R", "U", "L", "B", "L'", "U'", "L'", "D", "U", "B", "F'", "U", "D'", "L", "U", "D", "R'", "L'", "D'", "F'", "L'", "U", "L", "F'", "L", "U'", "L'"]
-    #return ["U'", "R'", "B'", "R", "B'", "D'", "R'", "D2", "F'", "R'", "L'", "D", "B", "U", "D", "R", "F'", "L'", "D'", "B2", "R", "U", "B", "F2", "R'", "L'", "D'"]
-    #return ["L'", "F2", "D'", "R", "L'", "U'", "D'", "R2", "D'", "F", "D", "U", "L'", "F", "L2", "R'", "U'", "F", "B'", "R'", "B'", "D", "U'", "B", "L'", "B'"]
-    #return ["L", "F'", "L'", "U'", "L'", "D2", "L'", "R'", "D", "R'", "F", "D", "F", "L'", "B'", "U", "F'", "U'", "D", "L", "F'", "B", "U", "B", "U", "L'", "U", "F"]
-    #return ["L", "D", "R", "D'", "R", "F2", "B'", "D", "U", "R'", "U", "F'", "L'", "B", "L", "F'", "D'", "L2", "U'", "D", "R2", "L", "F'", "D", "R'", "U'", "F"]
-    #return ["R2", "L2", "F2", "B"]
-    #return ["D'", "R", "B'", "U'", "B'", "R'", "B'", "L'", "B'", "U'", "F'", "L", "U'", "L2", "R'", "F", "B'", "R2", "L'", "F", "L2", "R2", "U", "L'", "F"]
-    #return ["F", "R", "B", "F'", "R", "U", "B", "L'", "U", "R", "D'", "L'", "R'", "D'", "F'", "U", "L", "R", "D", "U'", "F", "B", "D", "L'", "U2", "D2", "F'", "R"]
 
-def TestLayerRotation(d, l):
+"""def TestLayerRotation(d, l):
     c = Cube()
 
     for s in c._layers[l]:
@@ -2082,7 +2075,7 @@ def CheckPLLAlgs():
 
     f.close()
     f2.close()
-    print("FIN")
+    print("FIN")"""
 
 if __name__ == '__main__':
     main()
