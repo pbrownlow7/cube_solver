@@ -1187,7 +1187,9 @@ class Cube:
         for i in a:
             self.RotateWithNotation(i)
             act.append(i)
-        act.append(self._alignAfterPLL())
+        align = self._alignAfterPLL()
+        if len(align) > 0:
+            act.append(align)
         return act
 
     def _alignAfterPLL(self):
@@ -1262,17 +1264,17 @@ class Cube:
         for item in turns:
             d = 0
             direction = "clockwise"
-            arm = letter_to_arm[item]
+            arm = letter_to_arm[item[0]]
             if len(item) > 1 and item[1] == "'":
                 direction = "anticlockwise"
                 d = 1
 
             arm_rotations.append((arm[1], d))
-            print("Rotating " + arm[0] + direction + "...")
+            #print("Rotating " + arm[0] + " " + direction + "...")
             
             if len(item) > 1 and item[1] == "2":
                 arm_rotations.append((arm[1], d))
-                print("Rotating " + arm[0] + direction + "...")
+                #print("Rotating " + arm[0] + " " + direction + "...")
 
         return arm_rotations
 
@@ -1433,6 +1435,7 @@ def listToStr(l):
     return s
 
 def SolveCube():
+    moves = []
     steps = 0
     start = time.time()
     c = Cube()
@@ -1448,6 +1451,7 @@ def SolveCube():
     print("SOLVE:")
 
     cross = c.SolveCross()
+    moves += cross
     if len(cross) > 0:
         nc = listToStr(cross)
     steps += len(cross)
@@ -1456,16 +1460,19 @@ def SolveCube():
     if f2l:
         for alg in f2l:
             a = alg.split(" ")
+            moves += a
             for r in a:
                 c.RotateWithNotation(r)
                 steps += 1
 
     oll = c.SolveOLL()
+    moves += oll
     steps += len(oll)
     if len(oll) > 0:
         no = listToStr(oll)
 
     pll = c.SolvePLL()
+    moves += pll
     steps += len(pll)
     if len(pll) > 0:
         np = listToStr(pll)
@@ -1486,10 +1493,14 @@ def SolveCube():
     print("")
     print("Time taken: " + str(total))
     print("Steps taken: " + str(steps))
+    print("")
+    mech = c._translateToMechanismInstructions(moves)
+    print("Mechanical movement instructions:")
+    print(mech)
 
 def main():
-    #SolveCube()
-    SolveMultipleCubes()
+    SolveCube()
+    #SolveMultipleCubes()
 
 def SolveMultipleCubes():
     total = 0
@@ -1575,6 +1586,94 @@ def CreateScramble():
     c._readable_solution = []
 
     return s
+
+def CheckOLLAlgs():
+    f = open("rpiOLLValues.txt", "r")
+    f2 = open("rpiOLLAlgs.txt", "r")
+    x = {"1":"R", "0":"X"}
+    y = 0
+
+    top_squares = [0, 1, 2, 7, 8, 3, 6, 5, 4]
+    side_squares = [51, 50, 49, 29, 28, 27, 20, 19, 18, 11, 10, 9]
+
+    for line in f:
+        y += 1
+        c = Cube()
+        l = line.split("\n")[0].split("-")
+        alg = f2.readline().split("\n")[0].split(" ")
+        for i in range(len(l[0])):
+            c._cube[top_squares[i]].colour = x[l[0][i]]
+        for i in range(len(l[1])):
+            c._cube[side_squares[i]].colour = x[l[1][i]]
+
+        for a in alg:
+            c.RotateWithNotation(a)
+
+        for i in top_squares:
+            if c._cube[i].colour != "R":
+                print("ERROR: " + str(y))
+                print(l)
+                print(alg)
+                print(c)
+                return
+
+    f.close()
+    f2.close()
+    print("FIN")
+
+def CheckPLLAlgs():
+    f = open("rpiPLLValues.txt", "r")
+    f2 = open("rpiPLLAlgs.txt", "r")
+    num_to_col = {"1":"W", "2":"G", "3":"Y", "4":"B"}
+    side_positions = [51, 50, 49, 29, 28, 27, 20, 19, 18, 11, 10, 9]
+    y = 0
+
+    for line in f:
+        y += 1
+        cu = Cube()
+        l  = line.split("\n")[0].split("-")
+        l2 = []
+        for item in l:
+            for item2 in item:
+                l2.append(item2)
+
+        for i in range(len(side_positions)):
+            cu._cube[side_positions[i]].colour = num_to_col[l2[i]]
+
+        a = int(l[0][0]) * (int(l[0][1]) + int(l[0][2]))
+        b = int(l[1][0]) + (int(l[1][1]) * int(l[1][2]))
+        c = (int(l[2][0]) * int(l[2][1])) + int(l[2][2])
+        d = (int(l[3][0]) + int(l[3][1])) * int(l[3][2])
+
+        val = a**c + b**d
+        alg = cu._pll_r.get(str(val))
+        a = alg.split(" ")
+        for item in a:
+            cu.RotateWithNotation(item)
+
+        for i in range(9):
+            if cu._cube[i].colour != "R":
+                print("ERROR TOP:")
+                print(y)
+                print(l)
+                print(alg)
+                print(cu)
+                return
+
+        pos_to_check = [51, 29, 20, 11]
+
+        for i in pos_to_check:
+            if cu._cube[i].colour != cu._cube[i-1].colour or cu._cube[i].colour != cu._cube[i-2].colour:
+                print("ERROR SIDE:")
+                print(y)
+                print(l)
+                print(alg)
+                print(cu)
+                return
+
+    f.close()
+    f2.close()
+    print("FIN")
 
 if __name__ == '__main__':
     main()
