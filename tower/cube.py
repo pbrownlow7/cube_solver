@@ -1413,6 +1413,62 @@ def SolveCube():
     print("")
     print("Time taken: " + str(total))
 
+def SolveCubeWithScramble(scramble):
+    moves = ["", "", "", "", "", "", "", ""]
+    start = time.time()
+    c = Cube()
+    scramble = scramble.split(" ")
+    #scramble = ["R", "U", "R'", "U'"]
+    ns = listToStr(scramble)
+    #print("SCRAMBLE:")
+    #print(ns)
+
+    for r in scramble:
+        c.RotateWithNotation(r)
+
+    #print("")
+    #print("SOLVE:")
+
+    cross = c.SolveCross()
+    nc = ""
+    if len(cross) > 0:
+        nc = listToStr(cross)
+    moves[0] = nc
+
+    f2l = c.SolveF2L()
+    for i in range(len(f2l)):
+        moves[i+1] = f2l[i]
+
+    oll = c.SolveOLL()
+    no = ""
+    if len(oll) > 0:
+        no = listToStr(oll)
+    moves[5] = no
+
+    pll = c.SolvePLL()
+    np = ""
+    if len(pll) > 0:
+        np = listToStr(pll)
+    moves[6] = np
+
+    fin = time.time()
+
+    total = fin - start
+    moves[7] = str(total)
+
+    return moves
+
+    #if len(cross) > 0:
+    #    print(nc)
+    #for alg in f2l:
+    #    print(alg)
+    #if len(oll) > 0:
+    #    print(no)
+    #if len(pll) > 0:
+    #    print(np)
+    #print("")
+    #print("Time taken: " + str(total))
+
 def main():
     #SolveCube()
     SolveMultipleCubes(10000)
@@ -1420,7 +1476,8 @@ def main():
 
 def SolveMultipleCubes(number):
     total = 0
-    for i in range(number):
+    #for i in range(number):
+    while True:
         start = time.time()
         c = Cube()
         scramble = CreateScramble()
@@ -1496,8 +1553,7 @@ def CreateScramble():
 
     c._readable_solution = []
 
-    #return s
-    return ['D', "L'", 'R', "U'", 'F', 'U', "B'", 'F', "L'", "B'", 'U', 'L', 'U', "R'", 'B', 'D', 'U', "F'", 'L2', "F'", 'D', 'U', "R'", 'U2', 'D', 'L', 'F2']
+    return s
 
 """def TestLayerRotation(d, l):
     c = Cube()
