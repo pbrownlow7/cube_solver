@@ -1,0 +1,50 @@
+body {
+	background-color: #8a8980;
+}
+
+button {
+	background-color: red;
+	border: 2px solid white;
+	border-radius: 12px;
+	color: white;
+	padding: 15px 32px;
+	display: inline-block;
+	font-size: 16px;
+	text-align: center;
+	width: 150px;
+}
+
+.normalButton:hover {
+	box-shadow: 0 12px 15px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+	cursor: pointer;
+}
+
+.disabledButton {
+	opacity: 0.6;
+	cursor: not-allowed;
+	box-shadow: none;
+}
+
+#cubeHolder {
+	position: relative;
+	width: 952px;
+	height: 636px;
+	top: 50px;
+	background-color: black;
+	/*border: 2px solid white;*/
+}
+
+.face {
+	position: absolute;
+	border: 4px groove black;
+	width: 312px;
+	height: 312px;
+}
+
+.square {
+	border: 2px groove black;
+	width: 100px;
+	height: 100px;
+	position: absolute;
+	/*background-color: red;*/
+}

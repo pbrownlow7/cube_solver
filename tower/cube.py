@@ -1469,9 +1469,22 @@ def SolveCubeWithScramble(scramble):
     #print("")
     #print("Time taken: " + str(total))
 
+def WebPageSolve():
+    s = CreateScramble()
+    ns = listToStr(s)
+    print(ns)
+    c = Cube()
+    for r in s:
+        c.RotateWithNotation(r)
+    colours = []
+    for co in c._cube:
+        colours.append(co.colour)
+    print(colours)
+
 def main():
+    WebPageSolve()
     #SolveCube()
-    SolveMultipleCubes(10000)
+    #SolveMultipleCubes(10000)
     #buildOLLPLLStats()
 
 def SolveMultipleCubes(number):
