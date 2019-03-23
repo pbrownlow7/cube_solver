@@ -4,6 +4,8 @@ $(document).ready(function() {
 	var propMapping = {0:0, 1:1, 2:2, 3:7, 4:8, 5:3, 6:6, 7:5, 8:4}
 	var faces = [];
 	var colours = {"R":"#cf0a00", "W":"#ffffff", "G":"#019e1b", "Y":"#ffec1c", "O":"#ff4800", "B":"#022f59"};
+	var colours = ["#cf0a00", "#ffffff", "#019e1b", "#ffec1c", "#ff4800", "#022f59"];
+	var squarePos = {0:"topLeft", 1:"topMiddle", 2:"topRight", 3:"middleLeft", 4:"middleMiddle", 5:"middleRight", 6:"bottomLeft", 7:"bottomMiddle", 8:"bottomRight"};
 	
 	index = 0;
 	for(var i = 0; i < 6; i++) {
@@ -33,17 +35,19 @@ $(document).ready(function() {
 			lv = ((j%3)*100)+((j%3)*4);
 			l = (lv).toString()+"px";
 
-			//faceIndex = (Math.floor(index/9)) * 9;
-			//mapIndex = index-faceIndex;
+			faceIndex = (Math.floor(index/9)) * 9;
+			mapIndex = index-faceIndex;
 			//colIndex = faceIndex + propMapping[mapIndex];
 			//console.log(i);
-			//b = colours[cols[colIndex]];
+			b = colours[Math.floor(index/9)];
+			c = squarePos[mapIndex];
 
 			$("#"+sid).css({
-				//"background-color": b,
+				"background-color": b,
 				"top": t,
 				"left": l
 			});
+			$("#"+sid).addClass(c);
 			index++;
 		}
 	}
@@ -72,7 +76,7 @@ function updateCube() {
 	for(var i = 0; i < 6; i++) {
 		for(var j = 0; j < 9; j ++) {
 			sid = i.toString()+j.toString();
-			$("#"+sid).fadeOut(1000);
+			$("#"+sid).fadeOut(500);
 			//b = colours[Math.floor(Math.random() * 6)];
 			//console.log(Math.floor(Math.random() * 6));
 			//console.log(b);
@@ -96,11 +100,11 @@ function updateCube() {
 					//"top": t,
 					//"left": l
 				});
-				$("#"+sid).fadeIn(1000);
+				$("#"+sid).fadeIn(500);
 				index++;
 			}
 		}
-	}, 1200);
+	}, 700);
 }
 
 function generateScramble(scramble) {

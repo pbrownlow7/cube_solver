@@ -42,9 +42,46 @@ button {
 }
 
 .square {
-	border: 2px groove black;
+	border: 2px solid black;
 	width: 100px;
 	height: 100px;
 	position: absolute;
-	/*background-color: red;*/
+	border-radius: 20px 0px 0px 0px;
 }
+
+.topLeft {
+	border-radius: 0px 0px 20px 0px
+}
+
+.topMiddle {
+	border-radius: 0px 0px 20px 20px;
+}
+
+.topRight {
+	border-radius: 0px 0px 0px 20px;
+}
+
+.middleLeft {
+	border-radius: 0px 20px 20px 0px;
+}
+
+.middleMiddle {
+	border-radius: 20px 20px 20px 20px;
+}
+
+.middleRight {
+	border-radius: 20px 0px 0px 20px;
+}
+
+.bottomLeft {
+	border-radius: 0px 20px 0px 0px;
+}
+
+.bottomMiddle {
+	border-radius: 20px 20px 0px 0px;
+}
+
+.bottomRight {
+	
+}
+
