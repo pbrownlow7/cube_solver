@@ -1373,7 +1373,6 @@ def SolveCube():
     start = time.time()
     c = Cube()
     scramble = CreateScramble()
-    scramble = ["R", "U", "R'", "U'"]
     ns = listToStr(scramble)
     print("SCRAMBLE:")
     print(ns)
@@ -1482,8 +1481,8 @@ def WebPageSolve():
     print(colours)
 
 def main():
-    WebPageSolve()
-    #SolveCube()
+    #WebPageSolve()
+    SolveCube()
     #SolveMultipleCubes(10000)
     #buildOLLPLLStats()
 
