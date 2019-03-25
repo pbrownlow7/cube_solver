@@ -11,19 +11,24 @@ Blue   --- #022f59
 		<head>
 			<meta charset="utf-8"/>
 			<title>AJAX Testing</title>
-			<link rel="stylesheet" type="text/css" href="cube.css">
 			<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 			<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
 			<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+			<link rel="stylesheet" type="text/css" href="cube.css">
 			<script type="text/javascript" src="cube.js"></script>
 		</head>
 		<body>
 			<button class="normalButton" id="generate" type="button">GENERATE</button>
 			<button class="disabledButton normalButton" disabled id="solve" type="button">SOLVE</button>
 			<button class="normalButton" id="stats" type="button">STATS</button>
-			<button class="normalButton" type="button" onclick="updateCube()">UPDATE</button>
-			<label>SCRAMBLE:</label>
-			<label id="scramble"></label>
+			<!--<button class="normalButton" type="button" onclick="updateCube()">UPDATE</button>
+			<button id="h" type="button" onclick="start()">Click</button>-->
+			<label class="solveText">SCRAMBLE:</label>
+			<label class="solveText" id="scramble"></label>
 			<div id="cubeHolder"></div>
+			<div id="solveHolder">
+				<!--<p class="solve">R U R U R U R U</p>
+				<p class="solve">R U R U R U R U</p>-->
+			<div>
 		</body>
 	</html>

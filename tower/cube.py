@@ -100,6 +100,8 @@ class Cube:
 
         self._cube_rotations = {"x":(0, 0), "x'":(0, 1), "y":(1, 0), "y'":(1, 1), "z":(2, 0), "z'":(2, 1)}
 
+        self._snapshots = []
+
     def _createCube(self):
         cube = []
         c = ["R", "W", "G", "Y", "O", "B"]
@@ -161,6 +163,8 @@ class Cube:
                 for j in range(1, 5):
                     for k in range(3):
                         self._cube[elems[j*-1][0][k]] = elems[j*-1][1][k]
+
+        self._snapshots.append(squaresToList(self._cube))
 
     def RotateMiddle(self, index, op):
         self._rotate(index, op, self._middle)
@@ -1348,6 +1352,12 @@ def listToStr(l):
         s += " " + l[i]
     return s
 
+def squaresToList(cube):
+    l = []
+    for sq in cube:
+        l.append(sq.colour)
+    return l
+
 def buildOLLPLLStats():
     print("Gathering OLL/PLL statistics...")
    
@@ -1416,17 +1426,11 @@ def SolveCubeWithScramble(scramble):
     moves = ["", "", "", "", "", "", "", ""]
     start = time.time()
     c = Cube()
-    scramble = scramble.split(" ")
-    #scramble = ["R", "U", "R'", "U'"]
-    ns = listToStr(scramble)
-    #print("SCRAMBLE:")
-    #print(ns)
 
     for r in scramble:
         c.RotateWithNotation(r)
 
-    #print("")
-    #print("SOLVE:")
+    c._snapshots = []
 
     cross = c.SolveCross()
     nc = ""
@@ -1455,18 +1459,7 @@ def SolveCubeWithScramble(scramble):
     total = fin - start
     moves[7] = str(total)
 
-    return moves
-
-    #if len(cross) > 0:
-    #    print(nc)
-    #for alg in f2l:
-    #    print(alg)
-    #if len(oll) > 0:
-    #    print(no)
-    #if len(pll) > 0:
-    #    print(np)
-    #print("")
-    #print("Time taken: " + str(total))
+    return (moves, c._snapshots)
 
 def WebPageSolve():
     s = CreateScramble()

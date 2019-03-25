@@ -34,6 +34,15 @@ button {
 	/*border: 2px solid white;*/
 }
 
+#solveHolder {
+	position: absolute;
+	width: 500px;
+	height: 600px;
+	/*background-color: white;*/
+	right: 200px;
+	top: 200px;
+}
+
 .face {
 	position: absolute;
 	border: 4px groove black;
@@ -85,3 +94,9 @@ button {
 	
 }
 
+.solveText {
+	text-align: left;
+	font-family: serif;
+	color: #3204ff;
+	font-weight: bold;
+}
