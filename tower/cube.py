@@ -100,7 +100,7 @@ class Cube:
 
         self._cube_rotations = {"x":(0, 0), "x'":(0, 1), "y":(1, 0), "y'":(1, 1), "z":(2, 0), "z'":(2, 1)}
 
-        self._snapshots = []
+        #self._snapshots = []
 
     def _createCube(self):
         cube = []
@@ -164,7 +164,7 @@ class Cube:
                     for k in range(3):
                         self._cube[elems[j*-1][0][k]] = elems[j*-1][1][k]
 
-        self._snapshots.append(squaresToList(self._cube))
+        #self._snapshots.append(squaresToList(self._cube))
 
     def RotateMiddle(self, index, op):
         self._rotate(index, op, self._middle)
@@ -1424,15 +1424,17 @@ def SolveCube():
 
 def SolveCubeWithScramble(scramble):
     moves = ["", "", "", "", "", "", "", ""]
+    movesList = []
     start = time.time()
     c = Cube()
 
     for r in scramble:
         c.RotateWithNotation(r)
 
-    c._snapshots = []
+    #c._snapshots = []
 
     cross = c.SolveCross()
+    movesList += cross
     nc = ""
     if len(cross) > 0:
         nc = listToStr(cross)
@@ -1440,15 +1442,18 @@ def SolveCubeWithScramble(scramble):
 
     f2l = c.SolveF2L()
     for i in range(len(f2l)):
+	movesList += f2l[i].split(" ")
         moves[i+1] = f2l[i]
 
     oll = c.SolveOLL()
+    movesList += oll
     no = ""
     if len(oll) > 0:
         no = listToStr(oll)
     moves[5] = no
 
     pll = c.SolvePLL()
+    movesList += pll
     np = ""
     if len(pll) > 0:
         np = listToStr(pll)
@@ -1459,7 +1464,26 @@ def SolveCubeWithScramble(scramble):
     total = fin - start
     moves[7] = str(total)
 
-    return (moves, c._snapshots)
+    usable_ml = []
+    for r in movesList:
+        if len(r) == 2 and r[1] == "2":
+            usable_ml.append(r[0])
+            usable_ml.append(r[0])
+	else:
+            usable_ml.append(r)
+
+    return (moves, usable_ml)
+
+def CreateScrambleForWebPage():
+    s = CreateScramble()
+    usable_s = []
+    for r in s:
+        if len(r) == 2 and r[1] == "2":
+            usable_s.append(r[0])
+            usable_s.append(r[0])
+	else:
+            usable_s.append(r)
+    return (s, usable_s)
 
 def WebPageSolve():
     s = CreateScramble()
@@ -1474,6 +1498,7 @@ def WebPageSolve():
     print(colours)
 
 def main():
+    #CheckPLLAlgs()
     #WebPageSolve()
     SolveCube()
     #SolveMultipleCubes(10000)

@@ -9,18 +9,17 @@ CORS(app)
 @app.route("/", methods=["GET"])
 def hello():
     c = Cube()
-    s = CreateScramble()
-    nice_s = listToStr(s)
-    for r in s:
+    s = CreateScrambleForWebPage()
+    nice_s = listToStr(s[0])
+    for r in s[0]:
         c.RotateWithNotation(r)
-    cube_list = squaresToList(c._cube)
-    return jsonify(nice_sc=nice_s, cube_snap=cube_list, sc=s)
+    return jsonify(nice_sc=nice_s, sc=s, usable_sc=s[1])
 
 @app.route("/solve", methods=["POST"])
 def solve():
     scramble = request.get_json()
-    m_and_s = SolveCubeWithScramble(scramble["scramble"])
-    return jsonify(mov=m_and_s[0], snaps=m_and_s[1])
+    m_and_ml = SolveCubeWithScramble(scramble["scramble"])
+    return jsonify(mov=m_and_ml[0], moves_list=m_and_ml[1])
 
 if __name__ == '__main__':
     app.run()
